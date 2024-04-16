@@ -161,7 +161,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica')
+    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica','Pegar Open Interest'
 )
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -255,3 +255,37 @@ elif opcao == 'Calcular Volatilidade Implícita':
         implied_vol = imp_vol(S0, K, tempo, r, market_price, Otype)
         st.success(f'Volatilidade Implícita para {Otype} de: {implied_vol  :.2f}% ')
         st.experimental_rerun()
+
+elif opcao == 'Pegar Open Interest':
+    ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
+    if st.button('Gerar PDFs de Open Interest'):
+        if ticker_symbol:
+            ticker = yf.Ticker(ticker_symbol)
+            expiries = ticker.options  # Pegar datas de vencimento disponíveis
+            if expiries:
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    pdf_files = []
+                    for expiry in expiries:
+                        opts = ticker.option_chain(expiry)
+                        calls = opts.calls[['strike', 'openInterest']]
+                        puts = opts.puts[['strike', 'openInterest']]
+
+                        # Criação do PDF para cada data de vencimento
+                        pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
+                        with PdfPages(pdf_path) as pdf:
+                            fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 8))
+                            calls.plot.bar(x='strike', y='openInterest', ax=ax1, title=f'Calls Open Interest for {expiry}')
+                            puts.plot.bar(x='strike', y='openInterest', ax=ax2, title=f'Puts Open Interest for {expiry}')
+                            pdf.savefig(fig)
+                            plt.close(fig)
+                        pdf_files.append(pdf_path)
+
+                    # Compactar todos os PDFs em um arquivo ZIP
+                    zip_path = os.path.join(temp_dir, f"{ticker_symbol}_OpenInterest.zip")
+                    with shutil.make_archive(zip_path[:-4], 'zip', temp_dir):
+                        with open(zip_path, "rb") as f:
+                            st.download_button('Baixar ZIP com PDFs', f.read(), file_name=os.path.basename(zip_path))
+            else:
+                st.error("Não há datas de vencimento disponíveis para este ticker.")
+        else:
+            st.error("Por favor, insira um ticker válido.")
