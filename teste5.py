@@ -279,9 +279,30 @@ elif opcao == 'Pegar Open Interest':
                         # Criação do PDF para cada data de vencimento selecionada
                         pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
                         with PdfPages(pdf_path) as pdf:
-                            fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 8))
-                            calls.plot.bar(x='strike', y='openInterest', ax=ax1, title=f'Calls Open Interest for {expiry}')
-                            puts.plot.bar(x='strike', y='openInterest', ax=ax2, title=f'Puts Open Interest for {expiry}')
+                            fig, axes = plt.subplots(1, 3, figsize=(30, 8))  # Adjust for better visibility
+
+                            # Plot for Calls
+                            calls_oi_grouped = calls.groupby('strike')['openInterest'].sum().reset_index()
+                            axes[0].bar(calls_oi_grouped['strike'], calls_oi_grouped['openInterest'], color='skyblue')
+                            axes[0].set_title(f'Calls Open Interest for {expiry}')
+                            axes[0].set_xlabel('Strike Price')
+                            axes[0].set_ylabel('Open Interest')
+
+                            # Plot for Puts
+                            puts_oi_grouped = puts.groupby('strike')['openInterest'].sum().reset_index()
+                            axes[1].bar(puts_oi_grouped['strike'], puts_oi_grouped['openInterest'], color='salmon')
+                            axes[1].set_title(f'Puts Open Interest for {expiry}')
+                            axes[1].set_xlabel('Strike Price')
+                            axes[1].set_ylabel('Open Interest')
+
+                            # Plot for Differences
+                            combined = pd.merge(calls_oi_grouped, puts_oi_grouped, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
+                            combined['difference'] = combined['openInterest_call'] - combined['openInterest_put']
+                            axes[2].bar(combined['strike'], combined['difference'], color='purple')
+                            axes[2].set_title(f'Difference (Calls - Puts) for {expiry}')
+                            axes[2].set_xlabel('Strike Price')
+                            axes[2].set_ylabel('Difference in Open Interest')
+
                             pdf.savefig(fig)
                             plt.close(fig)
 
