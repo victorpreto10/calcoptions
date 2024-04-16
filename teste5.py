@@ -261,20 +261,23 @@ elif opcao == 'Calcular Volatilidade Implícita':
         st.experimental_rerun()
 
 elif opcao == 'Pegar Open Interest':
-    ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
-    if st.button('Gerar PDFs de Open Interest'):
-        if ticker_symbol:
-            ticker = yf.Ticker(ticker_symbol)
-            expiries = ticker.options  # Pegar datas de vencimento disponíveis
-            if expiries:
+     ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
+    if ticker_symbol:
+        ticker = yf.Ticker(ticker_symbol)
+        expiries = ticker.options  # Pegar datas de vencimento disponíveis
+        
+        if expiries:
+            selected_expiries = st.multiselect('Escolha as Datas de Vencimento:', expiries)
+            
+            if st.button('Gerar PDFs de Open Interest'):
                 with tempfile.TemporaryDirectory() as temp_dir:
                     pdf_files = []
-                    for expiry in expiries:
+                    for expiry in selected_expiries:
                         opts = ticker.option_chain(expiry)
                         calls = opts.calls[['strike', 'openInterest']]
                         puts = opts.puts[['strike', 'openInterest']]
 
-                        # Criação do PDF para cada data de vencimento
+                        # Criação do PDF para cada data de vencimento selecionada
                         pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
                         with PdfPages(pdf_path) as pdf:
                             fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 8))
@@ -289,7 +292,7 @@ elif opcao == 'Pegar Open Interest':
                     with shutil.make_archive(zip_path[:-4], 'zip', temp_dir):
                         with open(zip_path, "rb") as f:
                             st.download_button('Baixar ZIP com PDFs', f.read(), file_name=os.path.basename(zip_path))
-            else:
-                st.error("Não há datas de vencimento disponíveis para este ticker.")
         else:
-            st.error("Por favor, insira um ticker válido.")
+            st.error("Não há datas de vencimento disponíveis para este ticker.")
+    else:
+        st.warning("Por favor, insira um ticker válido.")
