@@ -271,7 +271,6 @@ elif opcao == 'Pegar Open Interest':
             
             if st.button('Gerar PDFs de Open Interest'):
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    pdf_files = []
                     for expiry in selected_expiries:
                         opts = ticker.option_chain(expiry)
                         calls = opts.calls[['strike', 'openInterest']]
@@ -285,14 +284,15 @@ elif opcao == 'Pegar Open Interest':
                             puts.plot.bar(x='strike', y='openInterest', ax=ax2, title=f'Puts Open Interest for {expiry}')
                             pdf.savefig(fig)
                             plt.close(fig)
-                        pdf_files.append(pdf_path)
 
-                    # Compactar todos os PDFs em um arquivo ZIP
-                    zip_path = os.path.join(temp_dir, f"{ticker_symbol}_OpenInterest.zip")
-                    with shutil.make_archive(zip_path[:-4], 'zip', temp_dir):
-                        with open(zip_path, "rb") as f:
-                            st.download_button('Baixar ZIP com PDFs', f.read(), file_name=os.path.basename(zip_path))
+                        # Providing a download button for each PDF
+                        with open(pdf_path, "rb") as f:
+                            st.download_button(label=f"Download PDF for {expiry}",
+                                               data=f.read(),
+                                               file_name=os.path.basename(pdf_path),
+                                               mime='application/octet-stream')
         else:
             st.error("Não há datas de vencimento disponíveis para este ticker.")
     else:
         st.warning("Por favor, insira um ticker válido.")
+
