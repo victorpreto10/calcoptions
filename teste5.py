@@ -279,29 +279,29 @@ elif opcao == 'Pegar Open Interest':
                         # Criação do PDF para cada data de vencimento selecionada
                         pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
                         with PdfPages(pdf_path) as pdf:
-                            fig, axes = plt.subplots(1, 3, figsize=(30, 8))  # Adjust for better visibility
+                            fig, axes = plt.subplots(1, 3, figsize=(30, 8))
 
-                            # Plot for Calls
+                            # Horizontal bar plot for Calls
                             calls_oi_grouped = calls.groupby('strike')['openInterest'].sum().reset_index()
-                            axes[0].bar(calls_oi_grouped['strike'], calls_oi_grouped['openInterest'], color='skyblue')
+                            axes[0].barh(calls_oi_grouped['strike'], calls_oi_grouped['openInterest'], color='skyblue')
                             axes[0].set_title(f'Calls Open Interest for {expiry}')
-                            axes[0].set_xlabel('Strike Price')
-                            axes[0].set_ylabel('Open Interest')
+                            axes[0].set_ylabel('Strike Price')
+                            axes[0].set_xlabel('Open Interest')
 
-                            # Plot for Puts
+                            # Horizontal bar plot for Puts
                             puts_oi_grouped = puts.groupby('strike')['openInterest'].sum().reset_index()
-                            axes[1].bar(puts_oi_grouped['strike'], puts_oi_grouped['openInterest'], color='salmon')
+                            axes[1].barh(puts_oi_grouped['strike'], puts_oi_grouped['openInterest'], color='salmon')
                             axes[1].set_title(f'Puts Open Interest for {expiry}')
-                            axes[1].set_xlabel('Strike Price')
-                            axes[1].set_ylabel('Open Interest')
+                            axes[1].set_ylabel('Strike Price')
+                            axes[1].set_xlabel('Open Interest')
 
-                            # Plot for Differences
+                            # Horizontal bar plot for Differences
                             combined = pd.merge(calls_oi_grouped, puts_oi_grouped, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
                             combined['difference'] = combined['openInterest_call'] - combined['openInterest_put']
-                            axes[2].bar(combined['strike'], combined['difference'], color='purple')
+                            axes[2].barh(combined['strike'], combined['difference'], color='purple')
                             axes[2].set_title(f'Difference (Calls - Puts) for {expiry}')
-                            axes[2].set_xlabel('Strike Price')
-                            axes[2].set_ylabel('Difference in Open Interest')
+                            axes[2].set_ylabel('Strike Price')
+                            axes[2].set_xlabel('Difference in Open Interest')
 
                             pdf.savefig(fig)
                             plt.close(fig)
