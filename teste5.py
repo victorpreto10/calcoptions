@@ -261,7 +261,7 @@ elif opcao == 'Calcular Volatilidade Implícita':
         st.experimental_rerun()
 
 elif opcao == 'Pegar Open Interest':
-     ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
+    ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
     if ticker_symbol:
         ticker = yf.Ticker(ticker_symbol)
         expiries = ticker.options  # Pegar datas de vencimento disponíveis
