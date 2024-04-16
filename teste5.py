@@ -12,6 +12,7 @@ import math
 import tempfile
 import shutil
 import os
+from matplotlib.backends.backend_pdf import PdfPages
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
