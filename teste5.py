@@ -10,7 +10,8 @@ import scipy.stats as ss
 from decimal import Decimal, getcontext
 import math
 import tempfile
-
+import shutil
+import os
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
