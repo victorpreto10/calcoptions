@@ -14,6 +14,10 @@ import shutil
 import os
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
@@ -165,7 +169,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica','Pegar Open Interest'
+    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel'
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -316,4 +320,67 @@ elif opcao == 'Pegar Open Interest':
             st.error("Não há datas de vencimento disponíveis para este ticker.")
     else:
         st.warning("Por favor, insira um ticker válido.")
+
+
+elif opcao == 'Gerar Excel de Dados Colados':
+    st.title("Gerar Excel a partir de Dados Colados")
+    data = st.text_area("Cole os dados aqui, separados por vírgula (CSV):", height=300)
+    nome_arquivo = st.text_input("Nome do Arquivo Excel:", "dados_exportados")
+    destinatario = st.text_input("Email do Destinatário:")
+    assunto = st.text_input("Assunto do Email:")
+    corpo_email = st.text_area("Corpo do Email:")
+
+    if st.button('Gerar Excel'):
+        if data and nome_arquivo:
+            try:
+                # Convertendo dados colados para DataFrame
+                from io import StringIO
+                data_io = StringIO(data)
+                df = pd.read_csv(data_io, sep=",")
+                excel_path = f"{nome_arquivo}.xlsx"
+                df.to_excel(excel_path, index=False)
+
+                # Oferecer download
+                with open(excel_path, "rb") as f:
+                    st.download_button(label="Baixar Excel", data=f, file_name=excel_path, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                st.success("Excel gerado com sucesso!")
+                
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
+
+    if st.button('Enviar Email com Excel'):
+        if destinatario and assunto and corpo_email and 'excel_path' in locals():
+            try:
+                # Configurações do servidor SMTP
+                smtp_server = 'smtp.seuprovedor.com'  # Mude para o seu servidor SMTP
+                smtp_user = 'seuemail@provedor.com'   # Seu email
+                smtp_password = 'suasenha'            # Sua senha
+
+                # Criando objeto mensagem
+                msg = MIMEMultipart()
+                msg['From'] = smtp_user
+                msg['To'] = destinatario
+                msg['Subject'] = assunto
+                msg.attach(MIMEText(corpo_email, 'plain'))
+
+                # Anexando o arquivo
+                part = MIMEBase('application', "octet-stream")
+                part.set_payload(open(excel_path, "rb").read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(excel_path))
+                msg.attach(part)
+
+                # Conexão com o servidor e envio do email
+                server = smtplib.SMTP(smtp_server, 587)
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(smtp_user, destinatario, msg.as_string())
+                server.quit()
+
+                st.success("Email enviado com sucesso!")
+
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao enviar o email: {e}")
+        else:
+            st.error("Por favor, preencha todos os campos necessários para enviar o email.")
 
