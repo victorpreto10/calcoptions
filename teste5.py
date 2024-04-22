@@ -329,29 +329,50 @@ elif opcao == 'Pegar Open Interest':
     else:
         st.warning("Por favor, insira um ticker válido.")
 
+def custom_css():
+    st.markdown(
+        """
+        <style>
+            .big-font {
+                font-size:30px !important;
+                font-weight: bold;
+            }
+            .dataframe {
+                border: 2px solid #f0f0f0;
+                border-radius: 5px;
+            }
+        </style>
+        """, unsafe_allow_html=True
+    )
 
+custom_css()
+st.set_page_config(page_title="Dashboard de Arbitragem por Cliente", layout="wide")
 elif opcao == 'spreads arb':
+
     # Título da página
-    st.title('Dashboard de Arbitragem por Cliente')
+    st.title('Dashboard de Arbitragem por Cliente', anchor=None)
 
     if 'data' not in st.session_state:
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
 
-    with st.form("my_form"):
-        cliente = st.text_input('Nome do Cliente')
-        tipo = st.selectbox('Tipo', ['Buy', 'Sell'])
-        ativo = st.text_input('Ativo')
-        bps = st.number_input('Nível de BPS', )
-        size = st.number_input('Size', )
-        submit_button = st.form_submit_button('Adicionar')
+    with st.expander("Adicionar Nova Operação"):
+        with st.form("my_form"):
+            cols = st.columns(3)
+            cliente = cols[0].text_input('Nome do Cliente')
+            tipo = cols[1].selectbox('Tipo', ['Buy', 'Sell'])
+            ativo = cols[2].text_input('Ativo')
+            
+            cols2 = st.columns(2)
+            bps = cols2[0].number_input('Nível de BPS', format="%f")
+            size = cols2[1].number_input('Size', format="%f")
+            submit_button = st.form_submit_button('Adicionar')
 
-    if submit_button:
-        new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size}
-        st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
+        if submit_button:
+            new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size}
+            st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
 
     # Filtro por cliente
-    clientes_disponiveis = st.session_state['data']['Cliente'].unique()
-    cliente_selecionado = st.selectbox('Filtrar por Cliente:', ['Todos'] + list(clientes_disponiveis))
+    cliente_selecionado = st.selectbox('Filtrar por Cliente:', ['Todos'] + list(st.session_state['data']['Cliente'].unique()))
 
     if cliente_selecionado != 'Todos':
         dados_filtrados = st.session_state['data'][st.session_state['data']['Cliente'] == cliente_selecionado]
@@ -359,10 +380,10 @@ elif opcao == 'spreads arb':
         dados_filtrados = st.session_state['data']
 
     st.write("Dados de Arbitragem por Cliente:")
-    st.dataframe(dados_filtrados)
+    st.dataframe(dados_filtrados.style.set_properties(**{'background-color': 'black', 'color': 'white', 'border-color': 'gray'}))
 
     if st.button('Limpar Dados'):
-        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
+        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
         st.experimental_rerun()
 
 
