@@ -334,7 +334,6 @@ elif opcao == 'spreads arb':
     # Título da página
     st.title('Dashboard de Arbitragem por Cliente')
 
-    # Inicialização do DataFrame
     if 'data' not in st.session_state:
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
 
@@ -343,18 +342,28 @@ elif opcao == 'spreads arb':
         tipo = st.selectbox('Tipo', ['Buy', 'Sell'])
         ativo = st.text_input('Ativo')
         bps = st.number_input('Nível de BPS', format="%d")
-        submit_button = st.form_submit_button(label='Adicionar')
+        submit_button = st.form_submit_button('Adicionar')
 
     if submit_button:
         new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps}
         st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
 
+    # Filtro por cliente
+    clientes_disponiveis = st.session_state['data']['Cliente'].unique()
+    cliente_selecionado = st.selectbox('Filtrar por Cliente:', ['Todos'] + list(clientes_disponiveis))
+
+    if cliente_selecionado != 'Todos':
+        dados_filtrados = st.session_state['data'][st.session_state['data']['Cliente'] == cliente_selecionado]
+    else:
+        dados_filtrados = st.session_state['data']
+
     st.write("Dados de Arbitragem por Cliente:")
-    st.dataframe(st.session_state['data'])
+    st.dataframe(dados_filtrados)
 
     if st.button('Limpar Dados'):
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
         st.experimental_rerun()
+
 
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
