@@ -360,6 +360,40 @@ if opcao == 'spreads arb':
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
         st.experimental_rerun()
 
+
+import streamlit as st
+import pandas as pd
+
+# Supondo que processar_dados agora também lide com dados de cliente
+# def processar_dados(dados_brutos):
+#     return dados_processados_com_cliente
+
+def mostrar_operacoes(operacoes, cliente_escolhido, ticker_escolhido, px_ref):
+    operacoes_cliente = operacoes.get(cliente_escolhido, {})
+    if ticker_escolhido in operacoes_cliente:
+        compras = sorted(operacoes_cliente[ticker_escolhido]["C"], key=lambda x: x[2], reverse=True)
+        vendas = sorted(operacoes_cliente[ticker_escolhido]["V"], key=lambda x: x[2])
+        for lista_operacoes, tipo in [(compras, "Compras"), (vendas, "Vendas")]:
+            st.subheader(f"{tipo} para {ticker_escolhido} de {cliente_escolhido}:")
+            for operacao in lista_operacoes:
+                diferencial = ((-operacao[2] / 10000) * px_ref) if tipo == "Compras" else ((operacao[2] / 10000) * px_ref)
+                st.write(f"{operacao[0]} | Diferencial: {diferencial:.6f} R$")
+
+st.title("Níveis de Arbitragem por Cliente e Ticker")
+
+
+
+# Seleção de cliente e ticker
+if st.session_state.get('dados_operacoes'):
+    clientes = list(st.session_state['dados_operacoes'].keys())
+    cliente_escolhido = st.selectbox("Escolha um cliente:", [""] + clientes)
+    if cliente_escolhido:
+        tickers = list(st.session_state['dados_operacoes'][cliente_escolhido].keys())
+        ticker_escolhido = st.selectbox("Escolha um ticker para o cliente selecionado:", [""] + tickers)
+        if ticker_escolhido:
+            px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{cliente_escolhido}_{ticker_escolhido}")
+            mostrar_operacoes(st.session_state['dados_operacoes'], cliente_escolhido, ticker_escolhido, px_ref)
+
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
