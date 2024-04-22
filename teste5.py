@@ -516,27 +516,31 @@ if 'limpar_adicionais' not in st.session_state:
     st.session_state['limpar_adicionais'] = False
 
 elif opcao == 'Niveis Kapitalo':
-    with st.sidebar:
-        st.header("Inserir e Gerenciar Dados")
-        
-        dados_raw = st.text_area("Cole os dados das operações aqui:", height=150, key="dados_iniciais")
-        if st.button("Salvar Dados Iniciais"):
-            if dados_raw:
-                linhas = dados_raw.strip().split("\n")
-                st.session_state['dados_operacoes'].extend(linhas)
-                st.success("Dados adicionados com sucesso!")
+    if 'dados_operacoes' not in st.session_state:
+    st.session_state['dados_operacoes'] = []
 
-        dados_adicionais = st.text_area("Cole operações adicionais aqui:", height=150, key="dados_adicionais")
-        if st.button("Adicionar Operações"):
-            if dados_adicionais:
-                linhas_adicionais = dados_adicionais.strip().split("\n")
-                st.session_state['dados_operacoes'].extend(linhas_adicionais)
-                st.success("Operações adicionais adicionadas com sucesso!")
+with st.sidebar:
+    st.header("Inserir e Gerenciar Dados")
+    dados_raw = st.text_area("Cole os dados das operações aqui:", height=150)
+    if st.button("Salvar Dados Iniciais"):
+        if dados_raw:
+            linhas = dados_raw.strip().split("\n")
+            st.session_state['dados_operacoes'].extend(linhas)
+            st.success("Dados adicionados com sucesso!")
 
-        if st.button("Apagar Todos os Dados"):
-            st.session_state['dados_operacoes'] = []
-            st.experimental_rerun()
+    dados_adicionais = st.text_area("Cole operações adicionais aqui:", height=150)
+    if st.button("Adicionar Operações"):
+        if dados_adicionais:
+            linhas_adicionais = dados_adicionais.strip().split("\n")
+            st.session_state['dados_operacoes'].extend(linhas_adicionais)
+            st.success("Operações adicionais adicionadas com sucesso!")
 
+    if st.button("Apagar Todos os Dados"):
+        st.session_state['dados_operacoes'] = []
+        st.experimental_rerun()
+
+# Main display area
+if 'dados_operacoes' in st.session_state and st.session_state['dados_operacoes']:
     operacoes_processadas = processar_dados(st.session_state['dados_operacoes'])
     tickers = list(operacoes_processadas.keys())
     ticker_escolhido = st.selectbox("Escolha um ticker:", [""] + tickers)
