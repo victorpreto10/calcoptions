@@ -335,17 +335,18 @@ elif opcao == 'spreads arb':
     st.title('Dashboard de Arbitragem por Cliente')
 
     if 'data' not in st.session_state:
-        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
+        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
 
     with st.form("my_form"):
         cliente = st.text_input('Nome do Cliente')
         tipo = st.selectbox('Tipo', ['Buy', 'Sell'])
         ativo = st.text_input('Ativo')
-        bps = st.number_input('Nível de BPS', format="%d")
+        bps = st.number_input('Nível de BPS', )
+        size = st.number_input('Size', )
         submit_button = st.form_submit_button('Adicionar')
 
     if submit_button:
-        new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps}
+        new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size}
         st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
 
     # Filtro por cliente
