@@ -20,6 +20,8 @@ from email.mime.base import MIMEBase
 from email import encoders
 import openpyxl
 from datetime import datetime
+import os
+import subprocess
 
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
@@ -331,73 +333,44 @@ elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
     
-    # Definindo a data de hoje para incluir no nome do arquivo
-    today = datetime.now().strftime("%Y%m%d")  # Formato de data como 'AAAAMMDD'
+    today = datetime.now().strftime("%Y%m%d")
     nome_arquivo = st.text_input("Nome do Arquivo Excel:", f"JP_BASKET{today}")
     
-    # Definindo valores padrão para os campos de email
-    default_destinatario = "destinatario@example.com"  # Substitua pelo email padrão desejado
-    default_assunto = f"JPM EXCEL {today}"  # Substitua pelo assunto padrão desejado
-    default_corpo_email = ""  # Substitua pelo texto padrão desejado
+    default_destinatario = "destinatario@example.com"
+    default_assunto = f"JPM EXCEL {today}"
+    default_corpo_email = ""
     
     destinatario = st.text_input("Email do Destinatário:", value=default_destinatario)
     assunto = st.text_input("Assunto do Email:", value=default_assunto)
     corpo_email = st.text_area("Corpo do Email:", value=default_corpo_email)
 
-    
-
-
     if st.button('Gerar Excel'):
         if data and nome_arquivo:
             try:
-                # Convertendo dados colados para DataFrame
                 from io import StringIO
                 data_io = StringIO(data)
                 df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)
                 df = pd.concat([pd.DataFrame([['']*len(df.columns)], columns=df.columns), df], ignore_index=True)
                 excel_path = f"{nome_arquivo}.xlsx"
-                df.to_excel(excel_path, index=False)
+                df.to_excel(excel_path, index=False, header=False)  # Sem cabeçalho
 
-                # Oferecer download
                 with open(excel_path, "rb") as f:
-                    st.download_button(label="Baixar Excel", data=f, file_name=excel_path, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    st.download_button("Baixar Excel", f.read(), file_name=excel_path)
                 st.success("Excel gerado com sucesso!")
                 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
-    if st.button('Enviar Email com Excel'):
+    if st.button('Enviar Email via Outlook'):
         if destinatario and assunto and corpo_email and 'excel_path' in locals():
             try:
-                # Configurações do servidor SMTP
-                smtp_server = 'smtp.seuprovedor.com'  # Mude para o seu servidor SMTP
-                smtp_user = 'seuemail@provedor.com'   # Seu email
-                smtp_password = 'suasenha'            # Sua senha
-
-                # Criando objeto mensagem
-                msg = MIMEMultipart()
-                msg['From'] = smtp_user
-                msg['To'] = destinatario
-                msg['Subject'] = assunto
-                msg.attach(MIMEText(corpo_email, 'plain'))
-
-                # Anexando o arquivo
-                part = MIMEBase('application', "octet-stream")
-                part.set_payload(open(excel_path, "rb").read())
-                encoders.encode_base64(part)
-                part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(excel_path))
-                msg.attach(part)
-
-                # Conexão com o servidor e envio do email
-                server = smtplib.SMTP(smtp_server, 587)
-                server.starttls()
-                server.login(smtp_user, smtp_password)
-                server.sendmail(smtp_user, destinatario, msg.as_string())
-                server.quit()
-
-                st.success("Email enviado com sucesso!")
+                # Comando para abrir o Outlook e criar um novo email com anexo
+                # Este comando depende da instalação e configuração do Outlook em seu sistema
+                command = f'start outlook /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
+                os.system(command)
+                st.success("Outlook aberto para envio de email!")
 
             except Exception as e:
-                st.error(f"Ocorreu um erro ao enviar o email: {e}")
+                st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
         else:
             st.error("Por favor, preencha todos os campos necessários para enviar o email.")
