@@ -362,22 +362,23 @@ elif opcao == 'Gerar Excel':
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
     if st.button('Enviar Email via Outlook'):
-    if destinatario and assunto and corpo_email:
-        try:
-            # Montando o comando usando o caminho do atalho do Outlook
-            command = f'start "" "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Outlook.lnk" /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
-            result = subprocess.run(command, shell=True, capture_output=True, text=True)
-            
-            if result.returncode != 0:
-                st.error("Falha ao abrir o Outlook")
-                st.error(f"Erro: {result.stderr}")
-            else:
-                st.success("Outlook aberto para envio de email!")
-
-        except Exception as e:
-            st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
+        if destinatario and assunto and corpo_email:
+            try:
+                # Montando o comando usando o caminho do atalho do Outlook
+                command = f'start "" "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Outlook.lnk" /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                
+                if result.returncode != 0:
+                    st.error("Falha ao abrir o Outlook")
+                    st.error(f"Erro: {result.stderr}")
+                else:
+                    st.success("Outlook aberto para envio de email!")
+    
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
     else:
         st.error("Por favor, preencha todos os campos necessários para enviar o email.")
+
 
                                                        
                 
