@@ -399,7 +399,7 @@ elif opcao == 'Gerar Excel':
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
 
-elif opcao == 'niveis kapitalo
+elif opcao == 'niveis kapitalo'
 
 
                                                        
