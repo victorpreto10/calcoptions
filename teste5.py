@@ -355,42 +355,40 @@ elif opcao == 'spreads arb':
     st.title('Dashboard de Arbitragem por Cliente')
 
     if 'data' not in st.session_state:
-        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size', 'Processed', 'Status'])
+    st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
 
-    with st.expander("Adicionar Nova Operação"):
-        with st.form("operation_form"):  # Assegura que todos os inputs e o botão de submissão estão dentro de um st.form()
-            cols = st.columns(3)
-            cliente = cols[0].text_input('Nome do Cliente')
-            tipo = cols[1].selectbox('Tipo', ['Buy', 'Sell'])
-            ativo = cols[2].text_input('Ativo')
-            
-            cols2 = st.columns(3)
-            bps = cols2[0].number_input('Nível de BPS')
-            size = cols2[1].number_input('Size')
-            processed = cols2[2].number_input('Processed')
-            submit_button = st.form_submit_button('Adicionar')
+with st.expander("Adicionar Nova Operação"):
+    with st.form("operation_form"):
+        cols = st.columns(3)
+        cliente = cols[0].text_input('Nome do Cliente')
+        tipo = cols[1].selectbox('Tipo', ['Buy', 'Sell'])
+        ativo = cols[2].text_input('Ativo')
+        
+        cols2 = st.columns(2)
+        bps = cols2[0].number_input('Nível de BPS', format="%f")
+        size = cols2[1].number_input('Size', format="%f")
+        submit_button = st.form_submit_button('Adicionar')
 
-            if submit_button:
-                new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size, 'Processed': processed, 'Status': False}
-                st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
+        if submit_button:
+            new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size}
+            st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
 
-    cliente_selecionado = st.selectbox('Filtrar por Cliente:', ['Todos'] + list(st.session_state['data']['Cliente'].unique()))
-    filtered_data = st.session_state['data'] if cliente_selecionado == 'Todos' else st.session_state['data'][st.session_state['data']['Cliente'] == cliente_selecionado]
+cliente_selecionado = st.selectbox('Filtrar por Cliente:', ['Todos'] + list(st.session_state['data']['Cliente'].unique()))
 
-    st.write("Dados de Arbitragem por Cliente:")
-    for i, row in filtered_data.iterrows():
-        with st.expander(f"{row['Cliente']} | {row['Tipo']} | {row['Ativo']}"):
-            cols = st.columns([1, 1, 1, 1])
-            cols[0].write(f"BPS: {row['BPS']}")
-            cols[1].write(f"Size: {row['Size']}")
-            cols[2].write(f"Processed: {row['Processed']}")
-            is_checked = cols[3].checkbox("Check if done", value=row['Status'], key=f"checkbox-{i}")
-            if is_checked:
-                st.session_state['data'].at[i, 'Status'] = True
+if cliente_selecionado != 'Todos':
+    filtered_data = st.session_state['data'][st.session_state['data']['Cliente'] == cliente_selecionado]
+else:
+    filtered_data = st.session_state['data']
 
-    if st.button('Limpar Dados'):
-        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size', 'Processed', 'Status'])
-        st.experimental_rerun()
+# Agregação dos dados para contar as boletas
+aggregated_data = filtered_data.groupby(['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size']).size().reset_index(name='Count')
+
+st.write("Dados de Arbitragem por Cliente:")
+st.dataframe(aggregated_data)
+
+if st.button('Limpar Dados'):
+    st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
+    st.experimental_rerun()
 
 
 elif opcao == 'Gerar Excel':
