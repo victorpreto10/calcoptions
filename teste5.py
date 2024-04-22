@@ -364,7 +364,8 @@ elif opcao == 'Gerar Excel':
     if st.button('Enviar Email via Outlook'):
         if destinatario and assunto and corpo_email:
             try:
-                command = f'outlook.exe /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
+                command = f'"C:\\Program Files\\Microsoft Office\\root\\Office16\\OUTLOOK.EXE" /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
+
                 result = subprocess.run(command, shell=True, capture_output=True, text=True)
                 if result.returncode != 0:
                     st.error("Falha ao abrir o Outlook")
