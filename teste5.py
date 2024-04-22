@@ -350,7 +350,7 @@ elif opcao == 'Gerar Excel':
                 from io import StringIO
                 data_io = StringIO(data)
                 df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)
-                df = pd.concat([pd.DataFrame([['']*len(df.columns)], columns=df.columns), df], ignore_index=True)
+                
                 excel_path = f"{nome_arquivo}.xlsx"
                 df.to_excel(excel_path, index=False, header=False)  # Sem cabeçalho
 
