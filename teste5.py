@@ -362,16 +362,16 @@ elif opcao == 'Gerar Excel':
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
     if st.button('Enviar Email via Outlook'):
-                   # Comando para abrir o Outlook e criar um novo email com anexo
-                command = f'outlook.exe /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
-                result = subprocess.run(command, shell=True, text=True, capture_output=True)
-                
-                if result.returncode != 0:
+        command = f'outlook.exe /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
+        result = subprocess.run(command, shell=True, text=True, capture_output=True)
+        if result.returncode != 0:
                     st.error("Falha ao abrir o Outlook")
                     st.error(f"Erro: {result.stderr}")
-                else:
-                    st.success("Outlook aberto para envio de email!")
-
-                except Exception as e:
-                    st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
+        else:
+             st.success("Outlook aberto para envio de email!")
+           
+                                                       
+                
+                
+           
       
