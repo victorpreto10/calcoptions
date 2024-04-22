@@ -365,10 +365,14 @@ elif opcao == 'Gerar Excel':
         if destinatario and assunto and corpo_email and 'excel_path' in locals():
             try:
                 # Comando para abrir o Outlook e criar um novo email com anexo
-                # Este comando depende da instalação e configuração do Outlook em seu sistema
-                command = f'start outlook /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
-                os.system(command)
-                st.success("Outlook aberto para envio de email!")
+                command = f'outlook.exe /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
+                result = subprocess.run(command, shell=True, text=True, capture_output=True)
+                
+                if result.returncode != 0:
+                    st.error("Falha ao abrir o Outlook")
+                    st.error(f"Erro: {result.stderr}")
+                else:
+                    st.success("Outlook aberto para envio de email!")
 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
