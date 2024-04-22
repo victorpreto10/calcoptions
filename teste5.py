@@ -19,6 +19,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 import openpyxl
+from datetime import datetime
+
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
@@ -323,13 +325,27 @@ elif opcao == 'Pegar Open Interest':
         st.warning("Por favor, insira um ticker válido.")
 
 
+from datetime import datetime
+
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
-    nome_arquivo = st.text_input("Nome do Arquivo Excel:", "dados_exportados")
-    destinatario = st.text_input("Email do Destinatário:")
-    assunto = st.text_input("Assunto do Email:")
-    corpo_email = st.text_area("Corpo do Email:")
+    
+    # Definindo a data de hoje para incluir no nome do arquivo
+    today = datetime.now().strftime("%Y%m%d")  # Formato de data como 'AAAAMMDD'
+    nome_arquivo = st.text_input("Nome do Arquivo Excel:", f"JP_BASKET{today}")
+    
+    # Definindo valores padrão para os campos de email
+    default_destinatario = "destinatario@example.com"  # Substitua pelo email padrão desejado
+    default_assunto = f"JPM EXCEL {today}"  # Substitua pelo assunto padrão desejado
+    default_corpo_email = ""  # Substitua pelo texto padrão desejado
+    
+    destinatario = st.text_input("Email do Destinatário:", value=default_destinatario)
+    assunto = st.text_input("Assunto do Email:", value=default_assunto)
+    corpo_email = st.text_area("Corpo do Email:", value=default_corpo_email)
+
+    
+
 
     if st.button('Gerar Excel'):
         if data and nome_arquivo:
