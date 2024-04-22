@@ -322,7 +322,7 @@ elif opcao == 'Pegar Open Interest':
         st.warning("Por favor, insira um ticker válido.")
 
 
-elif opcao == 'Gerar Excel de Dados Colados':
+elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por vírgula (CSV):", height=300)
     nome_arquivo = st.text_input("Nome do Arquivo Excel:", "dados_exportados")
