@@ -358,29 +358,29 @@ elif opcao == 'spreads arb':
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size', 'Processed', 'Status'])
 
     with st.expander("Adicionar Nova Operação"):
-        cols = st.columns(3)
-        cliente = cols[0].text_input('Nome do Cliente')
-        tipo = cols[1].selectbox('Tipo', ['Buy', 'Sell'])
-        ativo = cols[2].text_input('Ativo')
-        
-        cols2 = st.columns(3)
-        bps = cols2[0].number_input('Nível de BPS', )
-        size = cols2[1].number_input('Size', )
-        processed = cols2[2].number_input('Processed', )
-        submit_button = st.form_submit_button('Adicionar')
+        with st.form("operation_form"):  # Assegura que todos os inputs e o botão de submissão estão dentro de um st.form()
+            cols = st.columns(3)
+            cliente = cols[0].text_input('Nome do Cliente')
+            tipo = cols[1].selectbox('Tipo', ['Buy', 'Sell'])
+            ativo = cols[2].text_input('Ativo')
+            
+            cols2 = st.columns(3)
+            bps = cols2[0].number_input('Nível de BPS')
+            size = cols2[1].number_input('Size')
+            processed = cols2[2].number_input('Processed')
+            submit_button = st.form_submit_button('Adicionar')
 
-        if submit_button:
-            new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size, 'Processed': processed, 'Status': False}
-            st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
+            if submit_button:
+                new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps, 'Size': size, 'Processed': processed, 'Status': False}
+                st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
 
-    # Filtro por cliente
     cliente_selecionado = st.selectbox('Filtrar por Cliente:', ['Todos'] + list(st.session_state['data']['Cliente'].unique()))
     filtered_data = st.session_state['data'] if cliente_selecionado == 'Todos' else st.session_state['data'][st.session_state['data']['Cliente'] == cliente_selecionado]
 
     st.write("Dados de Arbitragem por Cliente:")
     for i, row in filtered_data.iterrows():
         with st.expander(f"{row['Cliente']} | {row['Tipo']} | {row['Ativo']}"):
-            cols = st.columns([1, 1, 1, 1, 1, 1])
+            cols = st.columns([1, 1, 1, 1])
             cols[0].write(f"BPS: {row['BPS']}")
             cols[1].write(f"Size: {row['Size']}")
             cols[2].write(f"Processed: {row['Processed']}")
