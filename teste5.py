@@ -325,7 +325,7 @@ elif opcao == 'Pegar Open Interest':
         st.warning("Por favor, insira um ticker válido.")
 
 
-from datetime import datetime
+
 
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
