@@ -22,6 +22,9 @@ import openpyxl
 from datetime import datetime
 import os
 import subprocess
+from io import StringIO
+
+
 
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
@@ -334,7 +337,7 @@ elif opcao == 'Gerar Excel':
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
     
     today = datetime.now().strftime("%Y%m%d")
-    nome_arquivo = st.text_input("Nome do Arquivo Excel:", f"JP_BASKET{today}")
+    nome_arquivo = st.text_input("Nome do Arquivo Excel:", f"JP_BASKET{today}.xlsx")
     
     default_destinatario = "destinatario@example.com"
     default_assunto = f"JPM EXCEL {today}"
@@ -345,30 +348,33 @@ elif opcao == 'Gerar Excel':
     corpo_email = st.text_area("Corpo do Email:", value=default_corpo_email)
 
     if st.button('Gerar Excel'):
-        if data and nome_arquivo:
+        if data:
             try:
-                from io import StringIO
                 data_io = StringIO(data)
                 df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)
-                
-                excel_path = f"{nome_arquivo}.xlsx"
-                df.to_excel(excel_path, index=False, header=False)  # Sem cabeçalho
+                df.to_excel(nome_arquivo, index=False, header=False)
 
-                with open(excel_path, "rb") as f:
-                    st.download_button("Baixar Excel", f.read(), file_name=excel_path)
+                with open(nome_arquivo, "rb") as f:
+                    st.download_button("Baixar Excel", f.read(), file_name=nome_arquivo)
                 st.success("Excel gerado com sucesso!")
                 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
     if st.button('Enviar Email via Outlook'):
-        command = f'outlook.exe /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
-        result = subprocess.run(command, shell=True, text=True, capture_output=True)
-        if result.returncode != 0:
+        if destinatario and assunto and corpo_email:
+            try:
+                command = f'outlook.exe /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                if result.returncode != 0:
                     st.error("Falha ao abrir o Outlook")
                     st.error(f"Erro: {result.stderr}")
+                else:
+                    st.success("Outlook aberto para envio de email!")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
         else:
-             st.success("Outlook aberto para envio de email!")
+            st.error("Por favor, preencha todos os campos necessários para enviar o email.")
            
                                                        
                 
