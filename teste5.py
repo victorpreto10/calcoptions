@@ -353,7 +353,7 @@ elif opcao == 'Gerar Excel':
                 # Convertendo dados colados para DataFrame
                 from io import StringIO
                 data_io = StringIO(data)
-                df = pd.read_csv(data_io, sep="\s+", engine='python')  # Alterado para lidar com separador de espaços
+                df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)  # Alterado para lidar com separador de espaços
                 excel_path = f"{nome_arquivo}.xlsx"
                 df.to_excel(excel_path, index=False)
 
