@@ -28,6 +28,29 @@ from io import StringIO
 
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
+def process_file(uploaded_file):
+    df = pd.read_excel(uploaded_file, header=1)
+    if 'Price' in df.columns and df['Price'].dtype == 'object':
+        df['Price'] = df['Price'].str.replace(',', '').astype(float)
+    df['Operation'] = df['Qtde'].apply(lambda x: 'Buy' if x > 0 else 'Sell')
+    if 'Price' in df.columns:
+        df['Total Value'] = df['Price'] * df['Qtde']
+        grouped_df = df.groupby(['Operation', 'Ticker Bloomberg']).apply(
+            lambda x: pd.Series({
+                'Qtde': x['Qtde'].sum(),
+                'Weighted Price': (x['Total Value']).sum() / x['Qtde'].sum()
+            })).reset_index()
+    else:
+        grouped_df = df.groupby(['Operation', 'Ticker Bloomberg']).agg({'Qtde': 'sum'}).reset_index()
+    return grouped_df
+
+
+# Função para comparar DataFrame com dados colados
+def compare_dataframes(df1, pasted_data):
+    TESTDATA = StringIO(pasted_data)
+    df2 = pd.read_csv(TESTDATA, sep="\t", header=None)
+    df2.columns = ['Operation', 'Ticker Bloomberg', 'Qtde', 'Price']
+    return df1.equals(df2)
 
 
 def call_bsm(S0, K, r, T, Otype, sig):
@@ -177,7 +200,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica','Niveis Kapitalo','Pegar Open Interest', 'Gerar Excel','spreads arb' 
+    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Leitor Recap Kap','Pegar Volatilidade Histórica','Niveis Kapitalo','Pegar Open Interest', 'Gerar Excel','spreads arb' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -431,6 +454,18 @@ elif opcao == 'Gerar Excel':
                         st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
+
+
+elif opcao == 'Leitor Recap Kap':
+    st.title('Leitor ADRxORD Kapitalo')
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        processed_data = process_file(uploaded_file)
+        st.write('Processed Data')
+        st.dataframe(processed_data)
+
+    
+    
 
 
 
