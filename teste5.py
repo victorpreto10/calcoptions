@@ -177,7 +177,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel'
+    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','spreads arb'
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -330,7 +330,35 @@ elif opcao == 'Pegar Open Interest':
         st.warning("Por favor, insira um ticker válido.")
 
 
+if opcao == 'spreads arb':
+    # Título da página
+    st.title('Dashboard de Arbitragem por Cliente')
 
+    # Inicialização do DataFrame
+    if 'data' not in st.session_state:
+        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
+
+    # Entrada de dados
+    with st.form("my_form"):
+        cliente = st.text_input('Nome do Cliente')
+        tipo = st.selectbox('Tipo', ['Buy', 'Sell'])
+        ativo = st.text_input('Ativo')
+        bps = st.number_input('Nível de BPS', format="%d")
+        submit_button = st.form_submit_button(label='Adicionar')
+
+    # Adicionando dados ao DataFrame e atualizando a session state
+    if submit_button:
+        new_data = {'Cliente': cliente, 'Tipo': tipo, 'Ativo': ativo, 'BPS': bps}
+        st.session_state['data'] = st.session_state['data'].append(new_data, ignore_index=True)
+
+    # Exibindo o DataFrame como uma tabela
+    st.write("Dados de Arbitragem por Cliente:")
+    st.dataframe(st.session_state['data'])
+
+    # Opção para limpar os dados (resetar o DataFrame)
+    if st.button('Limpar Dados'):
+        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS'])
+        st.experimental_rerun()
 
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
