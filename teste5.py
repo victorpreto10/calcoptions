@@ -355,7 +355,8 @@ elif opcao == 'spreads arb':
     st.title('Dashboard de Arbitragem por Cliente')
 
     if 'data' not in st.session_state:
-    st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
+        
+        st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
         
         with st.expander("Adicionar Nova Operação"):
             with st.form("operation_form"):
