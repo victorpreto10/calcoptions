@@ -325,7 +325,7 @@ elif opcao == 'Pegar Open Interest':
 
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
-    data = st.text_area("Cole os dados aqui, separados por vírgula (CSV):", height=300)
+    data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
     nome_arquivo = st.text_input("Nome do Arquivo Excel:", "dados_exportados")
     destinatario = st.text_input("Email do Destinatário:")
     assunto = st.text_input("Assunto do Email:")
@@ -337,7 +337,7 @@ elif opcao == 'Gerar Excel':
                 # Convertendo dados colados para DataFrame
                 from io import StringIO
                 data_io = StringIO(data)
-                df = pd.read_csv(data_io, sep=",")
+                df = pd.read_csv(data_io, sep="\s+", engine='python')  # Alterado para lidar com separador de espaços
                 excel_path = f"{nome_arquivo}.xlsx"
                 df.to_excel(excel_path, index=False)
 
@@ -384,4 +384,3 @@ elif opcao == 'Gerar Excel':
                 st.error(f"Ocorreu um erro ao enviar o email: {e}")
         else:
             st.error("Por favor, preencha todos os campos necessários para enviar o email.")
-
