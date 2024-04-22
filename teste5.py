@@ -370,7 +370,7 @@ elif opcao == 'Pegar Open Interest':
     
     custom_css()
     
-    st.set_page_config(page_title="Dashboard de Arbitragem por Cliente", layout="wide")
+    
     
 elif opcao == 'spreads arb':
 
