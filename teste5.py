@@ -492,17 +492,17 @@ def mostrar_operacoes(operacoes, ticker_escolhido, px_ref):
         vendas = sorted(operacoes[ticker_escolhido]["V"], key=lambda x: x[2])
         for lista_operacoes, tipo in [(compras, "Compras"), (vendas, "Vendas")]:
             st.subheader(f"{tipo} para {ticker_escolhido}:")
-            for operacao in lista_operacoes:
-                # Correção na fórmula de diferencial para compras e vendas
-                diferencial = ((-operacao[2] / 10000) * px_ref) if tipo == "Compras" else (
-                            (operacao[2] / 10000) * px_ref)
-                checkbox_id = operacao[3]
-                check = st.checkbox(f"{operacao[0]} | Diferencial: {diferencial:.6f} R$", key=checkbox_id,
-                                    value=checkbox_id in st.session_state['selecionados'])
+            for index, operacao in enumerate(lista_operacoes):
+                # Creating a unique key for each checkbox using ticker, index, and operation type
+                diferencial = ((-operacao[2] / 10000) * px_ref) if tipo == "Compras" else (operacao[2] / 10000) * px_ref
+                unique_key = f"{ticker_escolhido}-{index}-{tipo}"  # Ensure this key is unique
+                check = st.checkbox(f"{operacao[0]} | Diferencial: {diferencial:.6f} R$", key=unique_key,
+                                    value=unique_key in st.session_state['selecionados'])
                 if check:
-                    st.session_state['selecionados'].add(checkbox_id)
+                    st.session_state['selecionados'].add(unique_key)
                 else:
-                    st.session_state['selecionados'].discard(checkbox_id)
+                    st.session_state['selecionados'].discard(unique_key)
+
     pass
 
 
