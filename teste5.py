@@ -517,38 +517,38 @@ if 'limpar_adicionais' not in st.session_state:
 
 elif opcao == 'Niveis Kapitalo':
     if 'dados_operacoes' not in st.session_state:
-    st.session_state['dados_operacoes'] = []
-
-with st.sidebar:
-    st.header("Inserir e Gerenciar Dados")
-    dados_raw = st.text_area("Cole os dados das operações aqui:", height=150)
-    if st.button("Salvar Dados Iniciais"):
-        if dados_raw:
-            linhas = dados_raw.strip().split("\n")
-            st.session_state['dados_operacoes'].extend(linhas)
-            st.success("Dados adicionados com sucesso!")
-
-    dados_adicionais = st.text_area("Cole operações adicionais aqui:", height=150)
-    if st.button("Adicionar Operações"):
-        if dados_adicionais:
-            linhas_adicionais = dados_adicionais.strip().split("\n")
-            st.session_state['dados_operacoes'].extend(linhas_adicionais)
-            st.success("Operações adicionais adicionadas com sucesso!")
-
-    if st.button("Apagar Todos os Dados"):
         st.session_state['dados_operacoes'] = []
-        st.experimental_rerun()
-
-# Main display area
-if 'dados_operacoes' in st.session_state and st.session_state['dados_operacoes']:
-    operacoes_processadas = processar_dados(st.session_state['dados_operacoes'])
-    tickers = list(operacoes_processadas.keys())
-    ticker_escolhido = st.selectbox("Escolha um ticker:", [""] + tickers)
-    if ticker_escolhido:
-        px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
-        mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
-
-
+    
+    with st.sidebar:
+        st.header("Inserir e Gerenciar Dados")
+        dados_raw = st.text_area("Cole os dados das operações aqui:", height=150)
+        if st.button("Salvar Dados Iniciais"):
+            if dados_raw:
+                linhas = dados_raw.strip().split("\n")
+                st.session_state['dados_operacoes'].extend(linhas)
+                st.success("Dados adicionados com sucesso!")
+    
+        dados_adicionais = st.text_area("Cole operações adicionais aqui:", height=150)
+        if st.button("Adicionar Operações"):
+            if dados_adicionais:
+                linhas_adicionais = dados_adicionais.strip().split("\n")
+                st.session_state['dados_operacoes'].extend(linhas_adicionais)
+                st.success("Operações adicionais adicionadas com sucesso!")
+    
+        if st.button("Apagar Todos os Dados"):
+            st.session_state['dados_operacoes'] = []
+            st.experimental_rerun()
+    
+    # Main display area
+    if 'dados_operacoes' in st.session_state and st.session_state['dados_operacoes']:
+        operacoes_processadas = processar_dados(st.session_state['dados_operacoes'])
+        tickers = list(operacoes_processadas.keys())
+        ticker_escolhido = st.selectbox("Escolha um ticker:", [""] + tickers)
+        if ticker_escolhido:
+            px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
+            mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
+    
+    
 
 
                                                        
