@@ -362,7 +362,7 @@ elif opcao == 'Gerar Excel':
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
     if st.button('Enviar Email via Outlook'):
-        if destinatario and assunto and corpo_email and 'excel_path' in locals():
+        if destinatario in locals():
             try:
                 # Comando para abrir o Outlook e criar um novo email com anexo
                 command = f'outlook.exe /c ipm.note /m "{destinatario}&subject={assunto}&body={corpo_email}" /a "{excel_path}"'
