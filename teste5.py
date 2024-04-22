@@ -329,24 +329,26 @@ elif opcao == 'Pegar Open Interest':
     else:
         st.warning("Por favor, insira um ticker válido.")
 
-def custom_css():
-    st.markdown(
-        """
-        <style>
-            .big-font {
-                font-size:30px !important;
-                font-weight: bold;
-            }
-            .dataframe {
-                border: 2px solid #f0f0f0;
-                border-radius: 5px;
-            }
-        </style>
-        """, unsafe_allow_html=True
-    )
-
-custom_css()
-st.set_page_config(page_title="Dashboard de Arbitragem por Cliente", layout="wide")
+    def custom_css():
+        st.markdown(
+            """
+            <style>
+                .big-font {
+                    font-size:30px !important;
+                    font-weight: bold;
+                }
+                .dataframe {
+                    border: 2px solid #f0f0f0;
+                    border-radius: 5px;
+                }
+            </style>
+            """, unsafe_allow_html=True
+        )
+    
+    custom_css()
+    
+    st.set_page_config(page_title="Dashboard de Arbitragem por Cliente", layout="wide")
+    
 elif opcao == 'spreads arb':
 
     # Título da página
