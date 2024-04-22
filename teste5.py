@@ -372,6 +372,6 @@ elif opcao == 'Gerar Excel':
                 else:
                     st.success("Outlook aberto para envio de email!")
 
-            except Exception as e:
-                st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
+                except Exception as e:
+                    st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
       
