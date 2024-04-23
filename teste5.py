@@ -625,7 +625,47 @@ elif opcao == 'Planilha SPX':
                            data=output,
                            file_name=nome_do_arquivo_final,
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+elif opcao == 'Basket Fidessa':
+    st.title("Basket Fidessa")
     
+    cliente = st.text_input("Nome do Cliente",
+    trade_text = st.text_area("Enter Trade Instructions:", height=300, value="S 506 ABBV\nS 500 AMZN\n...")
+    
+    if st.button("Generate Baskets"):
+        table1, table2 = parse_trade_instructions_adjusted(trade_text)
+        
+        df_table1 = pd.DataFrame(table1, columns=['Type', 'Ticker', 'Quantity'])
+        df_table2 = pd.DataFrame(table2, columns=['Type', 'Ticker', 'Quantity'])
+    
+        today = datetime.now().strftime('%m-%d-%Y')
+    
+        # Add zero column
+        df_table1['Zero'] = 0
+        df_table2['Zero'] = 0
+    
+        # Saving dataframes to CSV in memory
+        output1 = BytesIO()
+        df_table1.to_csv(output1, index=False)
+        output1.seek(0)
+    
+        output2 = BytesIO()
+        df_table2.to_csv(output2, index=False)
+        output2.seek(0)
+    
+        file_name1 = f"{cliente}_BASKET_{today}_table1.csv"
+        file_name2 = f"{cliente}_BASKET_{today}_table2.csv"
+    
+        st.download_button("Download Table 1", data=output1, file_name=file_name1, mime='text/csv')
+        st.download_button("Download Table 2", data=output2, file_name=file_name2, mime='text/csv')
+    
+    # Optional: Display the tables in Streamlit
+          # Display quantities sum
+        st.write("Quantities Sum for Table 1:")
+        st.write(quantities_sum_table1)
+        st.write("Quantities Sum for Table 2:")
+        st.write(quantities_sum_table2)
 
 
                                                        
