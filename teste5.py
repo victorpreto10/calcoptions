@@ -45,7 +45,7 @@ def parse_trade_instructions_adjusted(text):
     for line in lines:
         words = line.split()
         if len(words) >= 3:
-            operation = 'S' if words[0] == 'S' else 'B'
+            operation = 'S' if words[0] == 'S' or 'SS' else 'B'
             quantity = words[1].replace(",", "")
             ticker = words[2].split('.')[0].upper()
 
