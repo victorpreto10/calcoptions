@@ -612,17 +612,18 @@ elif opcao == 'Planilha SPX':
         
     
         # Gerar Excel
-        today = datetime.now().strftime('%m_%d_%y')
-        nome_do_Arquivo = f"{nome_arquivo}_{today}.xlsx"
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_cash.to_excel(writer, sheet_name='CASH', index=False)
             df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
-            writer.save()
-    
+        output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
+
+        today = datetime.now().strftime('%m_%d_%y')
+        nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
+        
         st.download_button(label="Baixar Dados em Excel",
-                           data=output.getvalue(),
-                           file_name=nome_do_Arquivo,
+                           data=output,
+                           file_name=nome_do_arquivo_final,
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     
 
