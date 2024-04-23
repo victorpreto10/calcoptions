@@ -78,6 +78,9 @@ def parse_trade_instructions_adjusted(text):
     return table1, table2
 
 def processar_dados_cash(dado):
+    if not dado.strip():  # Verifica se o dado está vazio ou contém apenas espaços
+        return []
+    
     linhas = []
     for linha in dado.strip().split('\n'):
         operacao, produto, resto = linha.split(' ', 2)
