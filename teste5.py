@@ -25,7 +25,7 @@ import subprocess
 from io import StringIO
 import re
 
-
+data_hoje = datetime.now().strftime('%m/%d/%Y')
 
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
@@ -587,7 +587,7 @@ elif opcao == 'Niveis Kapitalo':
             px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
             mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
 
-data_hoje = datetime.now().strftime('%m/%d/%Y')
+
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
