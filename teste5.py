@@ -24,6 +24,7 @@ import os
 import subprocess
 from io import StringIO
 import re
+from io import BytesIO
 
 data_hoje = datetime.now().strftime('%m/%d/%Y')
 
