@@ -666,6 +666,7 @@ elif opcao == 'Basket Fidessa':
         # Add zero column
         df_table1['Zero'] = 0
         df_table2['Zero'] = 0
+        quantities_sum_table1 = sum_quantities_by_operation(df_table1)
     
         # Saving dataframes to CSV in memory
         output1 = BytesIO()
