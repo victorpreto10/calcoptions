@@ -596,7 +596,7 @@ elif opcao == 'Planilha SPX':
         trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
         nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
         dados_cash = st.text_area("Cole os dados de CASH aqui:            ex: V PETR4 159.362 @ 40,382615 ", height=150)
-        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:S	PETR3	639,342	41.779994             ", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:   S	PETR3	639,342	41.779994             ", height=150)
         dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B	WDOK24	6	5,241.00000000", height=150)
         submitted = st.form_submit_button("Processar e Baixar Excel")
     
