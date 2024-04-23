@@ -1,4 +1,4 @@
-import streamlit as st
+limport streamlit as st
 import yfinance as yf
 import numpy as np
 import pandas as pd
@@ -371,7 +371,7 @@ elif opcao == 'Calcular Volatilidade Implícita':
     S0 = st.number_input('Preço do Ativo Subjacente', value=100.0)
     K = st.number_input('Preço de Exercício', value=100.0)
     data_vencimento = st.date_input('Data de Vencimento')
-    r = st.number_input('Taxa de Juros Livre de Risco (%)', value=0.0) / 100
+    r = st.number_input('Taxa de Juros Livre de Risco (%)', value=0.0) / decimal(100)
     hoje = pd.Timestamp.today().floor('D')
     
     vencimento = pd.Timestamp(data_vencimento)
