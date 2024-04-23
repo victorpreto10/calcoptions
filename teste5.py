@@ -25,8 +25,20 @@ import subprocess
 from io import StringIO
 import re
 from io import BytesIO
+import requests
 
 data_hoje = datetime.now().strftime('%m/%d/%Y')
+
+def get_real_time_price(ticker, api_key):
+    url = f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={api_key}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        current_price = data['c']  # 'c' is the current price field in the response
+        return current_price
+    else:
+        st.error("Failed to fetch data from Finnhub.")
+        return None
 
 def sum_quantities_by_operation(df):
     # Convert the 'Quantity' column to numeric type to sum up correctly
@@ -263,7 +275,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home','Spreads Arb','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
+    ('Home','Spreads Arb','NOTIONAL PARA SHARES','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -687,6 +699,23 @@ elif opcao == 'Basket Fidessa':
           # Display quantities sum
         st.write("Quantities Sum by side: ")
         st.write(quantities_sum_table1)
+
+elif opcao == 'NOTIONAL PARA SHARES':
+    st.title("Notional to Shares Calculator")
+
+    api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
+    ticker = st.text_input("Enter the stock ticker (e.g., AAPL):")
+    notional_dollars = st.number_input("Enter the notional amount in dollars:", min_value=0.0, format='%f')
+    
+    if st.button("Calculate Shares"):
+        if api_key and ticker:
+            price = get_real_time_price(ticker.upper(), api_key)
+            if price is not None:
+                shares = notional_dollars / price
+                st.write(f"Current Price: ${price:.2f}")
+                st.write(f"Number of Shares: {shares:.0f}")
+    
+    
         
 
 
