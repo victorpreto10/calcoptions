@@ -724,8 +724,9 @@ elif opcao == 'Notional to shares':
                 price = get_real_time_price(ticker.upper(), api_key)
                 if price is not None:
                     shares = notional_dollars / price
+                    formatted_shares = "{:,.0f}".format(shares) 
                     st.write(f"Current Price: ${price:.2f}")
-                    st.write(f"Number of Shares: {shares:.0f}")
+                    st.write(f"Number of Shares: {formatted_shares:.0f}")
         except ValueError as e:
             st.error(str(e))
         
