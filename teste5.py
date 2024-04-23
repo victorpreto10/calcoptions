@@ -28,6 +28,12 @@ from io import BytesIO
 
 data_hoje = datetime.now().strftime('%m/%d/%Y')
 
+def sum_quantities_by_operation(df):
+    # Convert the 'Quantity' column to numeric type to sum up correctly
+    df['Quantity'] = pd.to_numeric(df['Quantity'], errors='coerce').fillna(0)
+    # Group the DataFrame by the 'Type' and sum the 'Quantity' column
+    quantities_sum = df.groupby('Type')['Quantity'].sum().to_dict()
+    return quantities_sum
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
@@ -674,14 +680,13 @@ elif opcao == 'Basket Fidessa':
         file_name2 = f"{cliente}_BASKET_{today}_table2.csv"
     
         st.download_button("Download Table 1", data=output1, file_name=file_name1, mime='text/csv')
-        st.download_button("Download Table 2", data=output2, file_name=file_name2, mime='text/csv')
+        
     
     # Optional: Display the tables in Streamlit
           # Display quantities sum
-        st.write("Quantities Sum for Table 1:")
+        st.write("Quantities Sum by side: ")
         st.write(quantities_sum_table1)
-        st.write("Quantities Sum for Table 2:")
-        st.write(quantities_sum_table2)
+        
 
 
                                                        
