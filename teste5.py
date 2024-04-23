@@ -365,20 +365,27 @@ elif opcao == 'Calcular Preço de Opções':
 
 
 elif opcao == 'Calcular Volatilidade Implícita':
-    Otype = st.radio("Tipo de Opção", ['Call', 'Put'])  # Opção para Put não implementada
-    market_price = Decimal(st.number_input('Preço de Mercado da Opção', value=5.0))
-    S0 = Decimal(st.number_input('Preço do Ativo Subjacente', value=100.0))
-    K = Decimal(st.number_input('Preço de Exercício', value=100.0))
+    Otype = st.radio("Tipo de Opção", ['Call', 'Put'])
+    market_price = st.number_input('Preço de Mercado da Opção', value=5.0)
+    S0 = st.number_input('Preço do Ativo Subjacente', value=100.0)
+    K = st.number_input('Preço de Exercício', value=100.0)
     data_vencimento = st.date_input('Data de Vencimento')
-    r = Decimal(st.number_input('Taxa de Juros Livre de Risco (%)', value=0.0)) / Decimal(100)
-    hoje = pd.Timestamp('today').floor('D')
+    r = st.number_input('Taxa de Juros Livre de Risco (%)', value=0.0) / 100
+    hoje = pd.Timestamp.today().floor('D')
+    
     vencimento = pd.Timestamp(data_vencimento)
     dias_corridos = (vencimento - hoje).days
-    tempo = Decimal(dias_corridos) / Decimal(252)  # Conversão para anos
+    tempo = Decimal(dias_corridos) / Decimal(252)  # Conversão para anos em termos de dias de negociação
+    
     if st.button('Calcular Volatilidade Implícita'):
-        implied_vol = imp_vol(S0, K, tempo, r, market_price, Otype)
-        st.success(f'Volatilidade Implícita para {Otype} de: {implied_vol  :.2f}% ')
-        st.rerun()
+        try:
+            implied_vol = imp_vol(S0, K, tempo, r, market_price, Otype)
+            if implied_vol is not None:
+                st.success(f'Volatilidade Implícita para {Otype} de: {implied_vol:.2f}% ')
+            else:
+                st.error("Não foi possível calcular a volatilidade implícita. Verifique os inputs.")
+        except Exception as e:
+            st.error(f"Erro ao calcular a volatilidade implícita: {e}")
 
 elif opcao == 'Pegar Open Interest':
     ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
