@@ -40,7 +40,7 @@ def parse_number_input(input_str):
         raise ValueError("Invalid input: Please enter a valid number with 'k' for thousands or 'm' for millions if needed.")
         
 def get_real_time_price(ticker, api_key):
-    url = f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={api_key}'
+    url = f'https://finnhub.io/api/v1/quote?symbol={ticker}&token=cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0'
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
