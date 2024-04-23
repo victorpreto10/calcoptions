@@ -139,37 +139,38 @@ def compare_dataframes(df1, pasted_data):
 
 
 def call_bsm(S0, K, r, T, Otype, sig):
+    # Certifique-se de que todos os valores estão como Decimal
+    S0, K, r, T, sig = map(Decimal, [S0, K, r, T, sig])
 
-
-    S0, K, r, T, sig = map(Decimal, [S0, K, r, T, sig])  # Converter todos para Decimal
-
-    d1 = Decimal(math.log(S0 / K)) + (r + (sig * sig) / 2) * T / (sig * Decimal(math.sqrt(T)))
+    d1 = (Decimal(math.log(S0 / K)) + (r + Decimal(0.5) * sig ** 2) * T) / (sig * Decimal(math.sqrt(T)))
     d2 = d1 - sig * Decimal(math.sqrt(T))
 
     if Otype == "Call":
-        price = S0 * Decimal(norm.cdf(float(d1))) - K * Decimal(math.exp(-r * T)) * Decimal(norm.cdf(float(d2)))
-    elif Otype == "Put":
-        price = -S0 * Decimal(norm.cdf(float(-d1))) + K * Decimal(math.exp(-r * T)) * Decimal(norm.cdf(float(-d2)))
+        price = S0 * Decimal(norm.cdf(float(d1))) - K * Decimal(math.exp(-float(r * T))) * Decimal(norm.cdf(float(d2)))
+    else:
+        price = K * Decimal(math.exp(-float(r * T))) * Decimal(norm.cdf(float(-d2))) - S0 * Decimal(norm.cdf(float(-d1)))
+
     return price
+
 def vega(S0, K, r, T, sig):
-    d1 = Decimal(m.log(S0 / K)) / (sig * Decimal(m.sqrt(T))) + Decimal(
-        (r + (sig * sig) / 2) * T / (sig * Decimal(m.sqrt(T))))
-    vega = S0 * Decimal(ss.norm.pdf(float(d1))) * Decimal(m.sqrt(T))
-    return vega
+    # Ajuste similar para a função vega
+    S0, K, r, T, sig = map(Decimal, [S0, K, r, T, sig])
+    d1 = (Decimal(math.log(S0 / K)) + (r + Decimal(0.5) * sig ** 2) * T) / (sig * Decimal(math.sqrt(T)))
+    return S0 * Decimal(norm.pdf(float(d1))) * Decimal(math.sqrt(T))
 
+def imp_vol(S0, K, T, r, market, Otype):
+    e = Decimal('1e-15')
+    x0 = Decimal('0.2')  # Um palpite inicial para sigma
 
-def imp_vol(S0, K, T, r, market, flag):
-    e = 10e-15
-    x0 = Decimal(1)
+    def newtons_method(S0, K, T, r, market, Otype, x0, e):
+        delta = call_bsm(S0, K, r, T, Otype, x0) - market
+        while abs(delta) > e:
+            adjustment = (call_bsm(S0, K, r, T, Otype, x0) - market) / vega(S0, K, r, T, x0)
+            x0 = x0 - adjustment
+            delta = call_bsm(S0, K, r, T, Otype, x0) - market
+        return x0
 
-    def newtons_method(S0, K, T, r, market, flag, x0, e):
-        delta = call_bsm(S0, K, r, T, flag, x0) - market
-        while delta > e:
-            x0 = Decimal(x0 - (call_bsm(S0, K, r, T, flag, x0) - market) / vega(S0, K, r, T, x0))
-            delta = abs(call_bsm(S0, K, r, T, flag, x0) - market)
-        return Decimal(x0)
-
-    sig = newtons_method(S0, K, T, r, market, flag, x0, e)
+    sig = newtons_method(S0, K, T, r, market, Otype, x0, e)
     return sig * 100
 
 
