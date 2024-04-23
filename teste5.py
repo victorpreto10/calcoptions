@@ -29,6 +29,45 @@ import re
 
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
+
+
+
+def processar_dados_cash(dado):
+    linhas = []
+    for linha in dado.strip().split('\n'):
+        operacao, produto, resto = linha.split(' ', 2)
+        qtde, preco = resto.split(' @ ')
+        qtde = qtde.replace('.', '')  # Removendo pontos usados para milhares
+        preco = preco.replace('.', '').replace(',', '.')  # Convertendo formato BR para formato numérico aceitável em Python
+        qtde = float(qtde) * (-1 if operacao == 'V' else 1)
+        linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+    return linhas
+
+
+def processar_dados_futuros(dado):
+    linhas = []
+    for linha in dado.strip().split('\n'):
+        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
+        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+            operacao, produto, qtde, preco = partes
+            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
+            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = float(qtde) * (-1 if operacao == 'S' else 1)
+            linhas.append([data_hoje, produto, qtde, float(preco), "Bloomberg", "", trader, "LIQUIDEZ", "ITAU"])
+    return linhas
+
+def processar_dados_inoa_cash(dado):
+    linhas = []
+    for linha in dado.strip().split('\n'):
+        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
+        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+            operacao, produto, qtde, preco = partes
+            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
+            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = float(qtde) * (-1 if operacao == 'S' else 1)
+            linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+    return linhas
+    
 def process_file(uploaded_file):
     df = pd.read_excel(uploaded_file, header=1)
     if 'Price' in df.columns and df['Price'].dtype == 'object':
@@ -201,7 +240,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Leitor Recap Kap','Pegar Volatilidade Histórica','Niveis Kapitalo','Pegar Open Interest', 'Gerar Excel','Spreads Arb' 
+    ('Home', 'Calcular Volatilidade Implícita', 'Calcular Preço de Opções', 'Leitor Recap Kap','Pegar Volatilidade Histórica','Niveis Kapitalo','Pegar Open Interest', 'Gerar Excel','Spreads Arb','Planilha SPX' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -547,7 +586,42 @@ elif opcao == 'Niveis Kapitalo':
         if ticker_escolhido:
             px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
             mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
+
+
+elif opcao == 'Planilha SPX':
+    st.title("Gerador de Planilha SPX")
     
+    with st.form("input_form"):
+        trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
+        nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
+        dados_cash = st.text_area("Cole os dados de CASH aqui:            ex: V PETR4 159.362 @ 40,382615 ", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:S	PETR3	639,342	41.779994             ", height=150)
+        dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B	WDOK24	6	5,241.00000000", height=150)
+        submitted = st.form_submit_button("Processar e Baixar Excel")
+    
+    if submitted:
+        linhas_cash = processar_dados_cash(dados_cash)
+        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
+        linhas_futuros = processar_dados_futuros(dados_futuros)
+    
+        # Consolidando todos os dados
+        linhas_cash_total = linhas_cash + linhas_cash_inoa
+        df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
+        df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+    
+        # Gerar Excel
+        today = datetime.now().strftime('%m_%d_%y')
+        nome_do_Arquivo = f"{nome_arquivo}_{today}.xlsx"
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_cash.to_excel(writer, sheet_name='CASH', index=False)
+            df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
+            writer.save()
+    
+        st.download_button(label="Baixar Dados em Excel",
+                           data=output.getvalue(),
+                           file_name=nome_do_Arquivo,
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     
 
 
