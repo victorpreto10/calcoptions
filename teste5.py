@@ -378,7 +378,7 @@ elif opcao == 'Calcular Volatilidade Implícita':
     if st.button('Calcular Volatilidade Implícita'):
         implied_vol = imp_vol(S0, K, tempo, r, market_price, Otype)
         st.success(f'Volatilidade Implícita para {Otype} de: {implied_vol  :.2f}% ')
-        st.experimental_rerun()
+        st.rerun()
 
 elif opcao == 'Pegar Open Interest':
     ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
