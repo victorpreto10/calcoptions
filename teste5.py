@@ -726,7 +726,7 @@ elif opcao == 'Notional to shares':
                     shares = notional_dollars / price
                     formatted_shares = "{:,.0f}".format(shares) 
                     st.write(f"Current Price: ${price:.2f}")
-                    st.write(f"Number of Shares: {formatted_shares:.0f}")
+                    st.write(f"Number of Shares: {formatted_shares}")
         except ValueError as e:
             st.error(str(e))
         
