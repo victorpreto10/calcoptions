@@ -718,17 +718,17 @@ elif opcao == 'Notional to shares':
     notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):")
     
     if st.button("Calculate Shares"):
-    try:
-        notional_dollars = parse_number_input(notional_str)
-        if ticker and api_key:
-            price = get_real_time_price(ticker.upper(), api_key)
-            if price is not None:
-                shares = notional_dollars / price
-                st.write(f"Current Price: ${price:.2f}")
-                st.write(f"Number of Shares: {shares:.0f}")
-    except ValueError as e:
-        st.error(str(e))
-    
+        try:
+            notional_dollars = parse_number_input(notional_str)
+            if ticker and api_key:
+                price = get_real_time_price(ticker.upper(), api_key)
+                if price is not None:
+                    shares = notional_dollars / price
+                    st.write(f"Current Price: ${price:.2f}")
+                    st.write(f"Number of Shares: {shares:.0f}")
+        except ValueError as e:
+            st.error(str(e))
+        
     
         
 
