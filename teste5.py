@@ -646,7 +646,7 @@ elif opcao == 'Planilha SPX':
 elif opcao == 'Basket Fidessa':
     st.title("Basket Fidessa")
     
-    cliente = st.text_input("Nome do Cliente",
+    cliente = st.text_input("Nome do Cliente",)
     trade_text = st.text_area("Enter Trade Instructions:", height=300, value="S 506 ABBV\nS 500 AMZN\n...")
     
     if st.button("Generate Baskets"):
