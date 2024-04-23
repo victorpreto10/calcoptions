@@ -28,7 +28,17 @@ from io import BytesIO
 import requests
 
 data_hoje = datetime.now().strftime('%m/%d/%Y')
-
+def parse_number_input(input_str):
+    input_str = input_str.lower().strip()
+    if input_str.endswith('k'):
+        return float(input_str[:-1]) * 1000
+    elif input_str.endswith('m'):
+        return float(input_str[:-1]) * 1000000
+    elif input_str.replace('.', '', 1).isdigit():
+        return float(input_str)
+    else:
+        raise ValueError("Invalid input: Please enter a valid number with 'k' for thousands or 'm' for millions if needed.")
+        
 def get_real_time_price(ticker, api_key):
     url = f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={api_key}'
     response = requests.get(url)
