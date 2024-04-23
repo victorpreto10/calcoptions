@@ -31,7 +31,23 @@ data_hoje = datetime.now().strftime('%m/%d/%Y')
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
+def parse_trade_instructions_adjusted(text):
+    lines = text.strip().split('\n')
+    table1 = []
+    table2 = []
 
+    for line in lines:
+        words = line.split()
+        if len(words) >= 3:
+            operation = 'S' if words[0] == 'S' else 'B'
+            quantity = words[1].replace(",", "")
+            ticker = words[2].split('.')[0].upper()
+
+            table1.append([operation, f'{ticker}.US', int(quantity)])
+            inverted_operation = 'B' if operation == 'S' else 'S'
+            table2.append([inverted_operation, f'{ticker}.US', int(quantity)])
+
+    return table1, table2
 
 def processar_dados_cash(dado):
     linhas = []
