@@ -608,6 +608,7 @@ elif opcao == 'Planilha SPX':
         linhas_cash_total = linhas_cash + linhas_cash_inoa
         df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
         df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+        data_hoje = datetime.now().strftime('%m/%d/%Y')
     
         # Gerar Excel
         today = datetime.now().strftime('%m_%d_%y')
