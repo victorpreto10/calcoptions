@@ -587,7 +587,7 @@ elif opcao == 'Niveis Kapitalo':
             px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
             mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
 
-
+data_hoje = datetime.now().strftime('%m/%d/%Y')
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
@@ -608,7 +608,7 @@ elif opcao == 'Planilha SPX':
         linhas_cash_total = linhas_cash + linhas_cash_inoa
         df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
         df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
-        data_hoje = datetime.now().strftime('%m/%d/%Y')
+        
     
         # Gerar Excel
         today = datetime.now().strftime('%m_%d_%y')
