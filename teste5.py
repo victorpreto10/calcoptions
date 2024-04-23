@@ -275,7 +275,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home','Spreads Arb','NOTIONAL PARA SHARES','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
+    ('Home','Spreads Arb','Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -700,20 +700,24 @@ elif opcao == 'Basket Fidessa':
         st.write("Quantities Sum by side: ")
         st.write(quantities_sum_table1)
 
-elif opcao == 'NOTIONAL PARA SHARES':
+elif opcao == 'Notional to shares':
     st.title("Notional to Shares Calculator")
 
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
     ticker = st.text_input("Enter the stock ticker (e.g., AAPL):")
-    notional_dollars = st.number_input("Enter the notional amount in dollars:", min_value=0.0, format='%f')
+    notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):")
     
-    if st.button("Calculate Shares"):
-        if api_key and ticker:
-            price = get_real_time_price(ticker.upper(), api_key)
-            if price is not None:
-                shares = notional_dollars / price
-                st.write(f"Current Price: ${price:.2f}")
-                st.write(f"Number of Shares: {shares:.0f}")
+    if st.button("Calculate Shares") and api_key:
+        try:
+            notional_dollars = parse_number_input(notional_str)
+            if ticker:
+                price = get_real_time_price(ticker.upper())
+                if price is not None:
+                    shares = notional_dollars / price
+                    st.write(f"Current Price: ${price:.2f}")
+                    st.write(f"Number of Shares: {shares:.0f}")
+        except ValueError as e:
+            st.error(str(e))
     
     
         
