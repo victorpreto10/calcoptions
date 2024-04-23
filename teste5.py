@@ -257,7 +257,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home','Spreads Arb','Niveis Kapitalo', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
+    ('Home','Spreads Arb','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
