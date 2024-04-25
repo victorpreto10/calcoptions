@@ -757,7 +757,7 @@ elif opcao == "Update com participação":
 
     
     if 'orders' not in st.session_state:
-    st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Shares', 'Initial Volume', 'Initial Participation'])
+        st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Shares', 'Initial Volume', 'Initial Participation'])
 
 
     with st.expander("Add New Order"):
