@@ -743,45 +743,54 @@ elif opcao == 'Notional to shares':
 
 elif opcao == "Update com participação":
     st.title("Market Participation Tracker")
-
-
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
+    base_url = "https://finnhub.io/api/v1/quote"
+    def get_stock_data(ticker):
+    response = requests.get(f"{base_url}?symbol={ticker}&token={api_key}")
+    if response.status_code == 200:
+        data = response.json()
+        price = data['c']  # Preço atual
+        volume = data['v']  # Volume total do dia
+        return price, volume
+    else:
+        return None, None
+
+    
     if 'orders' not in st.session_state:
-        st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Notional', 'Initial Volume', 'Current Shares', 'Initial Participation'])
+    st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Shares', 'Initial Volume', 'Initial Participation'])
+
 
     with st.expander("Add New Order"):
         ticker = st.text_input("Enter the stock ticker (e.g., AAPL):", key='new_ticker')
-        notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):", key='new_notional')
+        shares = st.number_input("Enter number of shares:", key='new_shares', min_value=0)
         initial_volume = st.number_input("Enter the initial volume when your order started:", key='new_initial_volume', min_value=0)
+        
+        if st.button("Add Order"):
+            price, _ = get_stock_data(ticker.upper())
+            if price:
+                st.session_state['orders'] = st.session_state['orders'].append({
+                    'Ticker': ticker,
+                    'Shares': shares,
+                    'Initial Volume': initial_volume,
+                    'Initial Participation': 0  # A ser calculado com o primeiro update
+                }, ignore_index=True)
     
-    if st.button("Add Order"):
-        notional_dollars = parse_number_input(notional_str)
-        price, _ = get_stock_data(ticker.upper(), api_key)
-        shares = notional_dollars / price
-        st.session_state['orders'] = st.session_state['orders'].append({
-            'Ticker': ticker,
-            'Notional': notional_dollars,
-            'Initial Volume': initial_volume,
-            'Current Shares': shares,
-            'Initial Participation': 0  # A ser calculado com o primeiro update
-        }, ignore_index=True)
-
     st.dataframe(st.session_state['orders'])
     
     with st.expander("Update Order"):
         selected_index = st.selectbox("Select Order to Update", st.session_state['orders'].index)
-        new_volume = st.number_input("Enter new current volume:", key='new_volume', min_value=0)
+        new_volume = st.number_input("Enter new current volume:", key='new_volume_update', min_value=0)
         
         if st.button("Update Participation"):
             order = st.session_state['orders'].iloc[selected_index]
-            _, current_volume = get_stock_data(order['Ticker'], api_key)
-            if new_volume > order['Initial Volume']:
-                participation = order['Current Shares'] / (new_volume - order['Initial Volume'])
-                st.session_state['orders'].loc[selected_index, 'Initial Participation'] = participation
+            _, current_volume = get_stock_data(order['Ticker'])
+            if current_volume and new_volume > order['Initial Volume']:
+                participation = order['Shares'] / (new_volume - order['Initial Volume'])
+                st.session_state['orders'].loc[selected_index, 'Initial Participation'] = "{:.2%}".format(participation)
                 st.success(f"Updated participation for {order['Ticker']}.")
     
     st.dataframe(st.session_state['orders'])
-    
+        
     
         
     
