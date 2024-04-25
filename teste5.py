@@ -747,7 +747,7 @@ elif opcao == "Update com participação":
 
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
     if 'orders' not in st.session_state:
-    st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Notional', 'Initial Volume', 'Current Shares', 'Initial Participation'])
+        st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Notional', 'Initial Volume', 'Current Shares', 'Initial Participation'])
 
     with st.expander("Add New Order"):
     ticker = st.text_input("Enter the stock ticker (e.g., AAPL):", key='new_ticker')
