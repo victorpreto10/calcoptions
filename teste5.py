@@ -750,9 +750,9 @@ elif opcao == "Update com participação":
         st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Notional', 'Initial Volume', 'Current Shares', 'Initial Participation'])
 
     with st.expander("Add New Order"):
-    ticker = st.text_input("Enter the stock ticker (e.g., AAPL):", key='new_ticker')
-    notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):", key='new_notional')
-    initial_volume = st.number_input("Enter the initial volume when your order started:", key='new_initial_volume', min_value=0)
+        ticker = st.text_input("Enter the stock ticker (e.g., AAPL):", key='new_ticker')
+        notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):", key='new_notional')
+        initial_volume = st.number_input("Enter the initial volume when your order started:", key='new_initial_volume', min_value=0)
     
     if st.button("Add Order"):
         notional_dollars = parse_number_input(notional_str)
