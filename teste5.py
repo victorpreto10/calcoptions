@@ -746,14 +746,14 @@ elif opcao == "Update com participação":
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
     base_url = "https://finnhub.io/api/v1/quote"
     def get_stock_data(ticker):
-    response = requests.get(f"{base_url}?symbol={ticker}&token={api_key}")
-    if response.status_code == 200:
-        data = response.json()
-        price = data['c']  # Preço atual
-        volume = data['v']  # Volume total do dia
-        return price, volume
-    else:
-        return None, None
+        response = requests.get(f"{base_url}?symbol={ticker}&token={api_key}")
+        if response.status_code == 200:
+            data = response.json()
+            price = data['c']  # Preço atual
+            volume = data['v']  # Volume total do dia
+            return price, volume
+        else:
+            return None, None
 
     
     if 'orders' not in st.session_state:
