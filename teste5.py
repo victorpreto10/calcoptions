@@ -289,7 +289,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home','Spreads Arb','Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
+    ('Home','Spreads Arb','"Update com participação",'Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -740,6 +740,49 @@ elif opcao == 'Notional to shares':
                     st.write(f"Number of Shares: {formatted_shares}")
         except ValueError as e:
             st.error(str(e))
+
+elif opcao == "Update com participação":
+    st.title("Market Participation Tracker")
+
+
+    api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
+    if 'orders' not in st.session_state:
+    st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Notional', 'Initial Volume', 'Current Shares', 'Initial Participation'])
+
+    with st.expander("Add New Order"):
+    ticker = st.text_input("Enter the stock ticker (e.g., AAPL):", key='new_ticker')
+    notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):", key='new_notional')
+    initial_volume = st.number_input("Enter the initial volume when your order started:", key='new_initial_volume', min_value=0)
+    
+    if st.button("Add Order"):
+        notional_dollars = parse_number_input(notional_str)
+        price, _ = get_stock_data(ticker.upper(), api_key)
+        shares = notional_dollars / price
+        st.session_state['orders'] = st.session_state['orders'].append({
+            'Ticker': ticker,
+            'Notional': notional_dollars,
+            'Initial Volume': initial_volume,
+            'Current Shares': shares,
+            'Initial Participation': 0  # A ser calculado com o primeiro update
+        }, ignore_index=True)
+
+    st.dataframe(st.session_state['orders'])
+    
+    with st.expander("Update Order"):
+        selected_index = st.selectbox("Select Order to Update", st.session_state['orders'].index)
+        new_volume = st.number_input("Enter new current volume:", key='new_volume', min_value=0)
+        
+        if st.button("Update Participation"):
+            order = st.session_state['orders'].iloc[selected_index]
+            _, current_volume = get_stock_data(order['Ticker'], api_key)
+            if new_volume > order['Initial Volume']:
+                participation = order['Current Shares'] / (new_volume - order['Initial Volume'])
+                st.session_state['orders'].loc[selected_index, 'Initial Participation'] = participation
+                st.success(f"Updated participation for {order['Ticker']}.")
+    
+    st.dataframe(st.session_state['orders'])
+    
+    
         
     
         
