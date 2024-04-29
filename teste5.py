@@ -27,6 +27,18 @@ import re
 from io import BytesIO
 import requests
 
+def format_date(date):
+    return datetime.strftime(datetime.strptime(date, '%m/%d/%Y'), '%d/%m/%Y')
+
+# Função para gerar a string XML
+def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
+    formatted_date = format_date(date)
+    action_prefix = 'blis-xml;' + ('Buy' if action == 'Buy' else 'Sell')
+    ticker_formatted = f'{ticker} US {date.replace("/", "")[0:4]} {strike_price}'
+    option_label = 'P' if option_type == 'Put' else 'C'
+    xml_string = f"{action_prefix};{ticker_formatted} {option_label}{strike_price};{option_type};{quantity};{formatted_date};{quantity};{price:.6f}"
+    return xml_string
+
 data_hoje = datetime.now().strftime('%m/%d/%Y')
 def parse_number_input(input_str):
     input_str = input_str.lower().strip()
@@ -49,6 +61,8 @@ def get_real_time_price(ticker, api_key):
     else:
         st.error("Failed to fetch data from Finnhub.")
         return None
+
+
 
 def sum_quantities_by_operation(df):
     # Convert the 'Quantity' column to numeric type to sum up correctly
@@ -794,24 +808,7 @@ elif opcao == "Update com participação":
 
 
 elif opcao == "XML Opção":
-    st.title("Market Participation Tracker")
-    import streamlit as st
-
-# Função para converter data no formato adequado
-def format_date(date):
-    return datetime.strftime(datetime.strptime(date, '%m/%d/%Y'), '%d/%m/%Y')
-
-# Função para gerar a string XML
-def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
-    formatted_date = format_date(date)
-    action_prefix = 'blis-xml;' + ('Buy' if action == 'Buy' else 'Sell')
-    ticker_formatted = f'{ticker} US {date.replace("/", "")[0:4]} {strike_price}'
-    option_label = 'P' if option_type == 'Put' else 'C'
-    xml_string = f"{action_prefix};{ticker_formatted} {option_label}{strike_price};{option_type};{quantity};{formatted_date};{quantity};{price:.6f}"
-    return xml_string
-
-# Página para adicionar opções
-def add_options_page():
+    
     st.title("Options Data Input and XML Generator")
     
     with st.form("options_form"):
@@ -828,6 +825,11 @@ def add_options_page():
     if submit_button and all([ticker, date, price, option_type]):
         xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
         st.text_area("Generated XML:", xml_result, height=100)
+    
+
+# Função para converter data no formato adequado
+
+# Página para adicionar opções
 
 
     
