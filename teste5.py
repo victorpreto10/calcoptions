@@ -840,19 +840,16 @@ elif opcao == "XML Opção":
     
     if submit_button and all([ticker, date, price, option_type]):
         xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-        st.session_state['options_list'].append({'action': action, 'ticker': ticker, 'date': date, 'quantity': quantity, 'price': price, 'option_type': option_type, 'strike_price': strike_price, 'xml': xml_result})
-    
-    # Mostrar o dashboard com as opções inputadas
-    if st.session_state['options_list']:
-        st.write("Options Dashboard")
-        for option in st.session_state['options_list']:
-            with st.container():
-                st.write(f"Action: {option['action']}, Ticker: {option['ticker']}, Date: {option['date']}, Quantity: {option['quantity']}, Price: {option['price']}, Option Type: {option['option_type']}, Strike Price: {option['strike_price']}")
-                if st.button("Copy XML", key=option['xml']):
-                    pd.DataFrame([option['xml']]).to_clipboard(index=False)
-                    st.success("Copied to clipboard!")
-    
+        new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
+        st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
 
+# Mostrar o dashboard com as opções inputadas
+    if not st.session_state['options_df'].empty:
+        st.write("Options Dashboard")
+        st.dataframe(st.session_state['options_df'])
+        st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
+    # Mostrar o dashboard com as opções inputadas
+   
 
 
 # Função para converter data no formato adequado
