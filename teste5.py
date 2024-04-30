@@ -31,11 +31,17 @@ def parse_data(data):
     # Use StringIO para converter string de dados para um dataframe
     data = StringIO(data)
     df = pd.read_csv(data, sep='\t')
+    # Remover espaços extras dos nomes das colunas
+    df.columns = [col.strip() for col in df.columns]
     return df
 
 def calculate_average_price(df):
+    # Verificar se 'Maturity' está presente nas colunas
+    if 'Maturity' not in df.columns:
+        st.error("Column 'Maturity' is missing from the input. Please check your data and try again.")
+        return pd.DataFrame()  # Retornar um DataFrame vazio para evitar mais erros
     # Converter a coluna 'Maturity' para datetime para garantir que a agrupação seja correta
-    df['Maturity'] = pd.to_datetime(df['Maturity'], format='%m/%d/%Y')
+    df['Maturity'] = pd.to_datetime(df['Maturity'], format='%m/%d/%Y', errors='coerce')
     # Agrupar dados e calcular preço médio
     grouped_df = df.groupby(['Symbol', 'Side', 'Strike', 'CALL / PUT', 'Maturity']).agg(
         Quantity_Total=('Quantity', 'sum'),
@@ -43,6 +49,7 @@ def calculate_average_price(df):
         Total_Commission=('Commission', 'sum')
     ).reset_index()
     return grouped_df
+
 
 
 def format_date(date):
