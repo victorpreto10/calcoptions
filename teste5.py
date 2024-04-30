@@ -818,7 +818,7 @@ elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
 
     with st.expander("Input Options"):
-            with st.form("options_form")
+            with st.form("options_form"):
             
             cols = st.columns(4)
             with cols[0]:
@@ -840,16 +840,21 @@ elif opcao == "XML Opção":
             
             submit_button = st.form_submit_button("Generate XML")
         
-        if submit_button and all([ticker, date, price, option_type]):
-            xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-            new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
-            st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
+            if submit_button and all([ticker, date, price, option_type]):
+                xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
+                new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
+                st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
     
         # Mostrar o dashboard com as opções inputadas
-        if not st.session_state['options_df'].empty:
-            st.write("Options Dashboard")
-            st.dataframe(st.session_state['options_df'])
-            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
+        if st.button("Clear Data"):
+        st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
+        st.success("Data cleared successfully!")
+
+    # Expander para mostrar o dashboard com as opções inputadas
+        with st.expander("Options Dashboard"):
+            if not st.session_state['options_df'].empty:
+                st.dataframe(st.session_state['options_df'])
+                st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
         
             
     
