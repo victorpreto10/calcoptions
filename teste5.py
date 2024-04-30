@@ -814,7 +814,7 @@ elif opcao == "XML Opção":
     with st.form("options_form"):
         action = st.selectbox("Action (Buy/Sell):", options=["Buy", "Sell"])
         ticker = st.text_input("Ticker (e.g., PBR):")
-        date = st.text_input("Expiration Date (mm/dd/yyyy):")
+        date = st.date_input("Expiration Date (mm/dd/yyyy):")
         quantity = st.number_input("Quantity:", min_value=0)
         price = st.number_input("Option Price:", format="%.2f")
         option_type = st.selectbox("Option Type (Call/Put):", ["Call", "Put"])
