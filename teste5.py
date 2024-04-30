@@ -32,7 +32,7 @@ def format_date(date):
 
 
 def format_date2(date):
-    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%d/%m/YY')
+    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%d/%m/%Y')
 
 # Função para gerar a string XML
 def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
