@@ -29,7 +29,7 @@ import requests
 
 def calculate_weighted_average(df):
     df['Weighted_Price'] = df['Price'] * df['Quantity']
-    result_df = df.groupby(['Action', 'Ticker', 'Date', 'Option Type']).agg(
+    result_df = df.groupby(['Action', 'Ticker', 'Date', 'Option Type', 'Strike Price']).agg(
         Total_Quantity=('Quantity', 'sum'),
         Total_Weighted_Price=('Weighted_Price', 'sum')
     ).reset_index()
