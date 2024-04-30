@@ -35,7 +35,7 @@ def generate_xml(action, ticker, date, quantity, price, option_type, strike_pric
     formatted_date = format_date(date)
     action_prefix = 'blis-xml;' + ('Buy' if action == 'Buy' else 'Sell')
     option_label = 'P' if option_type == 'Put' else 'C'
-    ticker_formatted = f"{ticker} US {formatted_date.replace('/', '')} {option_label}{strike_price:.0f}"
+    ticker_formatted = f"{ticker} US {formatted_date} {option_label}{strike_price:.0f}"
     xml_string = f"{action_prefix};{ticker_formatted};{option_type};{strike_price:.0f};{formatted_date};{quantity};{price:.6f}"
     return xml_string
 
