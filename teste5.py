@@ -839,10 +839,10 @@ elif opcao == "XML Opção":
             
             submit_button = st.form_submit_button("Generate XML")
         
-        if submit_button and all([ticker, date, price, option_type]):
-            xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-            new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
-            st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
+    if submit_button and all([ticker, date, price, option_type]):
+        xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
+        new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
+        st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
 
     with st.expander("Options Dashboard"):
         if not st.session_state['options_df'].empty:
