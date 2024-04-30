@@ -28,16 +28,17 @@ from io import BytesIO
 import requests
 
 def format_date(date):
-    return datetime.strptime(date, '%m/%d/%Y').strftime('%m/%d/%y')
+    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%y')
 
 # Função para gerar a string XML
 def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
     formatted_date = format_date(date)
     action_prefix = 'blis-xml;' + ('Buy' if action == 'Buy' else 'Sell')
     option_label = 'P' if option_type == 'Put' else 'C'
-    ticker_formatted = f"{ticker} US {formatted_date} {option_label}{strike_price:.0f}"
-    xml_string = f"{action_prefix};{ticker_formatted};{option_type};{strike_price:.0f};{formatted_date};{quantity};{price:.6f}"
+    ticker_formatted = f"{ticker} US {formatted_date} {option_label}{int(strike_price)}"
+    xml_string = f"{action_prefix};{ticker_formatted};{option_type};{int(strike_price)};{formatted_date};{quantity};{price:.6f}"
     return xml_string
+
 
 data_hoje = datetime.now().strftime('%m/%d/%Y')
 def parse_number_input(input_str):
