@@ -812,7 +812,8 @@ elif opcao == "Update com participação":
     st.dataframe(st.session_state['orders'])
 
 if 'options_list' not in st.session_state:
-    st.session_state['options_list'] = []
+    st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
+    
 
 elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
