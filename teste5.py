@@ -28,11 +28,11 @@ from io import BytesIO
 import requests
 
 def format_date(date):
-    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%yy')
+    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%y')
 
 
 def format_date2(date):
-    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%d/%m/%y')
+    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%d/%m/YY')
 
 # Função para gerar a string XML
 def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
