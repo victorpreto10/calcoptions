@@ -811,9 +811,8 @@ elif opcao == "Update com participação":
     
     st.dataframe(st.session_state['orders'])
 
-if 'options_list' not in st.session_state:
+if 'options_df' not in st.session_state:
     st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
-    
 
 elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
@@ -844,20 +843,11 @@ elif opcao == "XML Opção":
         new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
         st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
 
-# Mostrar o dashboard com as opções inputadas
+    # Mostrar o dashboard com as opções inputadas
     if not st.session_state['options_df'].empty:
         st.write("Options Dashboard")
         st.dataframe(st.session_state['options_df'])
         st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
-    # Mostrar o dashboard com as opções inputadas
-   
-
-
-# Função para converter data no formato adequado
-
-# Página para adicionar opções
-
-
     
         
     
