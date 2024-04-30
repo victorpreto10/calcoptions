@@ -840,20 +840,27 @@ elif opcao == "XML Opção":
             submit_button = st.form_submit_button("Generate XML")
         
     if submit_button and all([ticker, date, price, option_type]):
-        commission = quantity * 0.25
+        commission = quantity * 0.25  # Cálculo da comissão baseado na quantidade
         xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-        new_data = {'Side': action, 'Symbol': ticker,  'Quantity': quantity,'Execution Price': price,'Strike': strike_price,'Maturity': date,  'CALL/PUT': option_type, 'Commission': commission, 'XML': xml_result}
-        st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
-
+        new_data = {
+            'Side': action, 
+            'Symbol': ticker, 
+            'Quantity': quantity,
+            'Execution Price': price,
+            'Strike': strike_price,
+            'Maturity': date, 
+            'CALL/PUT': option_type, 
+            'Commission': commission, 
+            'XML': xml_result
+        }
+    # Adicionar de forma segura ao DataFrame e garantir que não haja problemas de referência
+        st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True).copy()
+    
     with st.expander("Options Dashboard"):
         if not st.session_state['options_df'].empty:
-            st.dataframe(st.session_state['options_df'], height= 300)
-            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
+            st.dataframe(st.session_state['options_df'], height=300)  # Exibição do DataFrame
+            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)  # Área para copiar o XML gerado
 
-    # Botão para limpar o DataFrame
-    if st.button("Clear Data"):
-        st.session_state['options_df'].drop(st.session_state['options_df'].index, inplace=True)  # Clear the DataFrame
-        st.rerun()
 
 
 
