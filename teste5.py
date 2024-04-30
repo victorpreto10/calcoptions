@@ -28,15 +28,15 @@ from io import BytesIO
 import requests
 
 def format_date(date):
-    return datetime.strftime(datetime.strptime(date, '%m/%d/%Y'), '%d/%m/%Y')
+    return datetime.strptime(date, '%m/%d/%Y').strftime('%m/%d/%y')
 
 # Função para gerar a string XML
 def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
     formatted_date = format_date(date)
     action_prefix = 'blis-xml;' + ('Buy' if action == 'Buy' else 'Sell')
-    ticker_formatted = f'{ticker} US {date.replace("/", "")[0:4]} {strike_price}'
     option_label = 'P' if option_type == 'Put' else 'C'
-    xml_string = f"{action_prefix};{ticker_formatted} {option_label}{strike_price};{option_type};{quantity};{formatted_date};{quantity};{price:.6f}"
+    ticker_formatted = f"{ticker} US {formatted_date.replace('/', '')} {option_label}{strike_price:.0f}"
+    xml_string = f"{action_prefix};{ticker_formatted};{option_type};{strike_price:.0f};{formatted_date};{quantity};{price:.6f}"
     return xml_string
 
 data_hoje = datetime.now().strftime('%m/%d/%Y')
@@ -808,7 +808,6 @@ elif opcao == "Update com participação":
 
 
 elif opcao == "XML Opção":
-    
     st.title("Options Data Input and XML Generator")
     
     with st.form("options_form"):
@@ -824,7 +823,20 @@ elif opcao == "XML Opção":
 
     if submit_button and all([ticker, date, price, option_type]):
         xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
+        st.session_state['options_list'].append(xml_result)
         st.text_area("Generated XML:", xml_result, height=100)
+
+    # Mostrar o dashboard com as opções inputadas
+    if st.session_state['options_list']:
+        st.write("Options Dashboard")
+        for option in st.session_state['options_list']:
+            st.text(option)
+
+        # Botão para copiar todas as opções para a área de transferência
+        if st.button("Copy All to Clipboard"):
+            df = pd.DataFrame(st.session_state['options_list'], columns=["XML Data"])
+            df.to_clipboard(index=False)
+            st.success("Copied to clipboard!")
     
 
 # Função para converter data no formato adequado
