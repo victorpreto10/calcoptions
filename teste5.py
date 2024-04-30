@@ -851,9 +851,8 @@ elif opcao == "XML Opção":
 
     # Botão para limpar o DataFrame
     if st.button("Clear Data"):
-        st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
-        st.success("Data cleared successfully!")
-
+        st.session_state['options_df'].drop(st.session_state['options_df'].index, inplace=True)  # Clear the DataFrame
+        st.rerun()
 
 
 
