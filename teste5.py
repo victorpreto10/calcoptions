@@ -28,7 +28,7 @@ from io import BytesIO
 import requests
 
 def format_date(date):
-    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%y')
+    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%yy')
 
 
 def format_date2(date):
