@@ -854,6 +854,11 @@ elif opcao == "XML Opção":
             st.dataframe(st.session_state['options_df'], height=300)
             st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
 
+    with st.expander("Options Confirmations"):
+        if not st.session_state['new_data'].empty:
+            st.dataframe(st.session_state['new_data'], height=300)
+            
+
     if st.button("Clear Data"):
         st.session_state['options_df'] = pd.DataFrame(columns=[
             "Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "Commission", "XML"
