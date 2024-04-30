@@ -811,34 +811,45 @@ if 'options_list' not in st.session_state:
 
 elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
-    
-    with st.form("options_form"):
+
+with st.form("options_form"):
+    cols = st.columns(4)
+    with cols[0]:
         action = st.selectbox("Action (Buy/Sell):", options=["Buy", "Sell"])
+    with cols[1]:
         ticker = st.text_input("Ticker (e.g., PBR):")
-        date = st.date_input("Expiration Date (mm/dd/yyyy):")
+    with cols[2]:
+        date = st.date_input("Expiration Date:")
+    with cols[3]:
         quantity = st.number_input("Quantity:", min_value=0)
-        price = st.number_input("Option Price:", format="%.2f")
+    
+    cols2 = st.columns(3)
+    with cols2[0]:
+        price = st.number_input("Option Price:", format="%.6f")
+    with cols2[1]:
         option_type = st.selectbox("Option Type (Call/Put):", ["Call", "Put"])
+    with cols2[2]:
         strike_price = st.number_input("Strike Price:", format="%.2f")
-        
-        submit_button = st.form_submit_button("Generate XML")
+    
+    submit_button = st.form_submit_button("Generate XML")
 
-    if submit_button and all([ticker, date, price, option_type]):
-        xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-        st.session_state['options_list'].append(xml_result)
-        st.text_area("Generated XML:", xml_result, height=100)
+if submit_button and all([ticker, date, price, option_type]):
+    xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
+    st.session_state['options_list'].append(xml_result)
+    st.text_area("Generated XML:", xml_result, height=100)
 
-    # Mostrar o dashboard com as opções inputadas
-    if st.session_state['options_list']:
-        st.write("Options Dashboard")
-        for option in st.session_state['options_list']:
-            st.text(option)
+# Mostrar o dashboard com as opções inputadas
+if st.session_state['options_list']:
+    st.write("Options Dashboard")
+    for option in st.session_state['options_list']:
+        st.text(option)
 
-        # Botão para copiar todas as opções para a área de transferência
-        if st.button("Copy All to Clipboard"):
-            df = pd.DataFrame(st.session_state['options_list'], columns=["XML Data"])
-            df.to_clipboard(index=False)
-            st.success("Copied to clipboard!")
+    # Botão para copiar todas as opções para a área de transferência
+    if st.button("Copy All to Clipboard"):
+        df = pd.DataFrame(st.session_state['options_list'], columns=["XML Data"])
+        df.to_clipboard(index=False)
+        st.success("Copied to clipboard!")
+    
 
 
 
