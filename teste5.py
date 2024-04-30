@@ -27,6 +27,24 @@ import re
 from io import BytesIO
 import requests
 
+def parse_data(data):
+    # Use StringIO para converter string de dados para um dataframe
+    data = StringIO(data)
+    df = pd.read_csv(data, sep='\t')
+    return df
+
+def calculate_average_price(df):
+    # Converter a coluna 'Maturity' para datetime para garantir que a agrupação seja correta
+    df['Maturity'] = pd.to_datetime(df['Maturity'], format='%m/%d/%Y')
+    # Agrupar dados e calcular preço médio
+    grouped_df = df.groupby(['Symbol', 'Side', 'Strike', 'CALL / PUT', 'Maturity']).agg(
+        Quantity_Total=('Quantity', 'sum'),
+        Average_Execution_Price=('Execution Price', 'mean'),
+        Total_Commission=('Commission', 'sum')
+    ).reset_index()
+    return grouped_df
+
+
 def format_date(date):
     return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%y')
 
@@ -859,6 +877,22 @@ elif opcao == "XML Opção":
             "Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "Commission", "XML"
         ])
         st.experimental_rerun()
+
+
+elif opcao == 'Consolidado opções':
+    st.title("Options Data Analysis")
+
+# Aba para entrada de dados
+    with st.expander("Paste Data Here"):
+        raw_data = st.text_area("Paste data in the following format: \nSide\tSymbol\tQuantity\tExecution Price\tStrike\tMaturity\tCALL / PUT\tCommission", height=300)
+        process_button = st.button("Process Data")
+    
+    if process_button and raw_data:
+        df = parse_data(raw_data)
+        result_df = calculate_average_price(df)
+        st.write("Aggregated and Averaged Data:")
+        st.dataframe(result_df)
+        
 
 
 
