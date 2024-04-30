@@ -805,7 +805,8 @@ elif opcao == "Update com participação":
     
     st.dataframe(st.session_state['orders'])
 
-
+if 'options_list' not in st.session_state:
+    st.session_state['options_list'] = []
 
 elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
@@ -837,7 +838,8 @@ elif opcao == "XML Opção":
             df = pd.DataFrame(st.session_state['options_list'], columns=["XML Data"])
             df.to_clipboard(index=False)
             st.success("Copied to clipboard!")
-    
+
+
 
 # Função para converter data no formato adequado
 
