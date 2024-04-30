@@ -844,16 +844,17 @@ elif opcao == "XML Opção":
             new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
             st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
 
+    with st.expander("Options Dashboard"):
+        if not st.session_state['options_df'].empty:
+            st.dataframe(st.session_state['options_df'])
+            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
+
     # Botão para limpar o DataFrame
     if st.button("Clear Data"):
         st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
         st.success("Data cleared successfully!")
 
-    # Expander para mostrar o dashboard com as opções inputadas
-    with st.expander("Options Dashboard"):
-        if not st.session_state['options_df'].empty:
-            st.dataframe(st.session_state['options_df'])
-            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
+
 
 
                                                        
