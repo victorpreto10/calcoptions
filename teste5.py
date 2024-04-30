@@ -840,20 +840,17 @@ with st.form("options_form"):
 
 if submit_button and all([ticker, date, price, option_type]):
     xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-    st.session_state['options_list'].append(xml_result)
-    st.text_area("Generated XML:", xml_result, height=100)
+    st.session_state['options_list'].append({'action': action, 'ticker': ticker, 'date': date, 'quantity': quantity, 'price': price, 'option_type': option_type, 'strike_price': strike_price, 'xml': xml_result})
 
 # Mostrar o dashboard com as opções inputadas
 if st.session_state['options_list']:
     st.write("Options Dashboard")
     for option in st.session_state['options_list']:
-        st.text(option)
-
-    # Botão para copiar todas as opções para a área de transferência
-    if st.button("Copy All to Clipboard"):
-        df = pd.DataFrame(st.session_state['options_list'], columns=["XML Data"])
-        df.to_clipboard(index=False)
-        st.success("Copied to clipboard!")
+        with st.container():
+            st.write(f"Action: {option['action']}, Ticker: {option['ticker']}, Date: {option['date']}, Quantity: {option['quantity']}, Price: {option['price']}, Option Type: {option['option_type']}, Strike Price: {option['strike_price']}")
+            if st.button("Copy XML", key=option['xml']):
+                pd.DataFrame([option['xml']]).to_clipboard(index=False)
+                st.success("Copied to clipboard!")
     
 
 
