@@ -840,8 +840,9 @@ elif opcao == "XML Opção":
             submit_button = st.form_submit_button("Generate XML")
         
     if submit_button and all([ticker, date, price, option_type]):
+        commission = quantity * 0.25
         xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-        new_data = {'Action': action, 'Ticker': ticker, 'Date': date, 'Quantity': quantity, 'Price': price, 'Option Type': option_type, 'Strike Price': strike_price, 'XML': xml_result}
+        new_data = {'Side': action, 'Symbol': ticker,  'Quantity': quantity,'Execution Price': price,'Strike': strike_price,'Maturity': date,  'CALL/PUT': option_type, 'Commission': commission, 'XML': xml_result}
         st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
 
     with st.expander("Options Dashboard"):
