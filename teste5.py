@@ -817,7 +817,7 @@ if 'options_df' not in st.session_state:
 elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
 
-    with st.form("options_form"):
+    with st.expander("options_form"):
         cols = st.columns(4)
         with cols[0]:
             action = st.selectbox("Action (Buy/Sell):", options=["Buy", "Sell"])
