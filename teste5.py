@@ -892,10 +892,10 @@ elif opcao == "XML Opção":
             st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
 
     with st.expander("Consolidated Dashboard"):
-    if not st.session_state['options_df'].empty:
-        consolidated_data = calculate_weighted_average(st.session_state['options_df'])
-        st.write("Consolidated Data with Average Prices:")
-        st.dataframe(consolidated_data)
+        if not st.session_state['options_df'].empty:
+            consolidated_data = calculate_weighted_average(st.session_state['options_df'])
+            st.write("Consolidated Data with Average Prices:")
+            st.dataframe(consolidated_data)
 
     if st.button("Clear Data"):
         st.session_state['options_df'] = pd.DataFrame(columns=[
