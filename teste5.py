@@ -846,8 +846,8 @@ elif opcao == "XML Opção":
 
     with st.expander("Options Dashboard"):
         if not st.session_state['options_df'].empty:
-            st.dataframe(st.session_state['options_df'])
-            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=300)
+            st.dataframe(st.session_state['options_df'], height= 300)
+            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
 
     # Botão para limpar o DataFrame
     if st.button("Clear Data"):
