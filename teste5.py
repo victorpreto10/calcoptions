@@ -30,13 +30,18 @@ import requests
 def format_date(date):
     return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%y')
 
+
+def format_date2(date):
+    return datetime.strptime(str(date), '%Y-%m-%d').strftime('%d/%m/%y')
+
 # Função para gerar a string XML
 def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
     formatted_date = format_date(date)
+    formatted_date2 = format_date2(date)
     action_prefix = 'blis-xml;' + ('Buy' if action == 'Buy' else 'Sell')
     option_label = 'P' if option_type == 'Put' else 'C'
     ticker_formatted = f"{ticker} US {formatted_date} {option_label}{int(strike_price)}"
-    xml_string = f"{action_prefix};{ticker_formatted};{option_type};{int(strike_price)};{formatted_date};{quantity};{price:.6f}"
+    xml_string = f"{action_prefix};{ticker_formatted};{option_type};{int(strike_price)};{formatted_date2};{quantity};{price:.6f}"
     return xml_string
 
 
