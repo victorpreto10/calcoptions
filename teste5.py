@@ -27,6 +27,15 @@ import re
 from io import BytesIO
 import requests
 
+def calculate_weighted_average(df):
+    df['Weighted_Price'] = df['Price'] * df['Quantity']
+    result_df = df.groupby(['Action', 'Ticker', 'Date', 'Option Type']).agg(
+        Total_Quantity=('Quantity', 'sum'),
+        Total_Weighted_Price=('Weighted_Price', 'sum')
+    ).reset_index()
+    result_df['Average_Price'] = result_df['Total_Weighted_Price'] / result_df['Total_Quantity']
+    return result_df.drop(columns=['Total_Weighted_Price'])
+
 def parse_data(data):
     # Usando StringIO para converter a string em um dataframe
     data = StringIO(data)
@@ -882,11 +891,17 @@ elif opcao == "XML Opção":
             st.dataframe(st.session_state['options_df'], height=300)
             st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
 
+    with st.expander("Consolidated Dashboard"):
+    if not st.session_state['options_df'].empty:
+        consolidated_data = calculate_weighted_average(st.session_state['options_df'])
+        st.write("Consolidated Data with Average Prices:")
+        st.dataframe(consolidated_data)
+
     if st.button("Clear Data"):
         st.session_state['options_df'] = pd.DataFrame(columns=[
             "Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "Commission", "XML"
         ])
-        st.experimental_rerun()
+        st.rerun()
 
 
 elif opcao == 'Consolidado opções':
