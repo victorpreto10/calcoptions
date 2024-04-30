@@ -28,20 +28,23 @@ from io import BytesIO
 import requests
 
 def parse_data(data):
-    # Use StringIO para converter string de dados para um dataframe
+    # Usando StringIO para converter a string em um dataframe
     data = StringIO(data)
-    df = pd.read_csv(data, sep='\t')
-    # Remover espaços extras dos nomes das colunas
-    df.columns = [col.strip() for col in df.columns]
+    df = pd.read_csv(data, sep='\t', engine='python')
+    # Remover espaços extras nos nomes das colunas e nos dados
+    df.columns = df.columns.str.strip()
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     return df
 
 def calculate_average_price(df):
-    # Verificar se 'Maturity' está presente nas colunas
     if 'Maturity' not in df.columns:
         st.error("Column 'Maturity' is missing from the input. Please check your data and try again.")
-        return pd.DataFrame()  # Retornar um DataFrame vazio para evitar mais erros
-    # Converter a coluna 'Maturity' para datetime para garantir que a agrupação seja correta
+        return pd.DataFrame()
+    # Converter a coluna 'Maturity' para datetime
     df['Maturity'] = pd.to_datetime(df['Maturity'], format='%m/%d/%Y', errors='coerce')
+    if df['Maturity'].isna().any():
+        st.error("Some dates in 'Maturity' column could not be parsed. Please check the format.")
+        return pd.DataFrame()
     # Agrupar dados e calcular preço médio
     grouped_df = df.groupby(['Symbol', 'Side', 'Strike', 'CALL / PUT', 'Maturity']).agg(
         Quantity_Total=('Quantity', 'sum'),
