@@ -894,8 +894,9 @@ elif opcao == "XML Opção":
     with st.expander("Consolidated Dashboard"):
         if not st.session_state['options_df'].empty:
             consolidated_data = calculate_weighted_average(st.session_state['options_df'])
+            formatted_data = consolidated_data.style.format({'Average_Price': '{:.6f}'})  # Formatar para 6 casas decimais
             st.write("Consolidated Data with Average Prices:")
-            st.dataframe(consolidated_data)
+            st.dataframe(formatted_data)
 
     if st.button("Clear Data"):
         st.session_state['options_df'] = pd.DataFrame(columns=[
