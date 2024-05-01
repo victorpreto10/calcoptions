@@ -26,6 +26,7 @@ from io import StringIO
 import re
 from io import BytesIO
 import requests
+import win32com.client
 
 def process_data(start_date, end_date):
     outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
