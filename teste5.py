@@ -27,6 +27,47 @@ import re
 from io import BytesIO
 import requests
 
+def process_data(start_date, end_date):
+    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+    inbox = outlook.GetDefaultFolder(6)  # Caixa de Entrada
+    sentbox = outlook.GetDefaultFolder(5)  # Itens Enviados
+
+    consolidated_df = pd.DataFrame()
+
+    for folder in [inbox, sentbox]:
+        consolidated_df = pd.concat([consolidated_df, process_folder(folder, start_date, end_date)], ignore_index=True)
+
+    if not consolidated_df.empty:
+        consolidated_df.iloc[:, 5] = pd.to_numeric(consolidated_df.iloc[:, 5], errors='coerce')
+        consolidated_df.iloc[:, 6] = pd.to_numeric(consolidated_df.iloc[:, 6], errors='coerce')
+        consolidated_df.dropna(subset=[consolidated_df.columns[5], consolidated_df.columns[6]], inplace=True)
+
+    return consolidated_df
+
+def process_folder(folder, start_date, end_date):
+    df_list = []
+    for single_date in (start_date + timedelta(days=n) for n in range((end_date - start_date).days + 1)):
+        formatted_date1 = single_date.strftime("Today Commissions %d%B%y")
+        formatted_date2 = single_date.strftime("Today Commissions %d-%b")
+        subject_filter = f"[Subject] = '{formatted_date1}' OR [Subject] = '{formatted_date2}'"
+        daily_messages = folder.Items.Restrict(subject_filter)
+        for message in daily_messages:
+            try:
+                html_body = message.HTMLBody
+                html_stream = StringIO(html_body)
+                tables = pd.read_html(html_stream)
+                if tables:
+                    df = tables[0]
+                    df = df[~df.apply(lambda row: row.astype(str).str.contains('Executed Quantity|Time').any(), axis=1)]
+                    df_list.append(df)
+            except Exception as e:
+                print(f"Erro ao processar o e-mail de {single_date.strftime('%d-%b')}: {e}")
+    return pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
+
+
+
+
+
 def calculate_weighted_average(df):
     df['Weighted_Price'] = df['Price'] * df['Quantity']
     result_df = df.groupby(['Action', 'Ticker', 'Date', 'Option Type', 'Strike Price']).agg(
@@ -346,7 +387,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home','Spreads Arb',"XML Opção",'Consolidado opções',"Update com participação",'Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
+    ('Home','Spreads Arb',"XML Opção",'Consolidado opções',"Update com participação",'Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Comissions','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -918,7 +959,36 @@ elif opcao == 'Consolidado opções':
         result_df = calculate_average_price(df)
         st.write("Aggregated and Averaged Data:")
         st.dataframe(result_df)
-        
+
+
+
+elif opcao == 'Comissions':
+    st.title("Comissions Off Shore")
+    start_date = st.date_input('Data de Início', datetime(2023, 7, 1))
+    end_date = st.date_input('Data de Término', datetime(2024, 1, 1))
+
+    if st.button('Processar Dados'):
+        consolidated_df = process_data(start_date, end_date)
+        if not consolidated_df.empty:
+            st.write("DataFrame consolidado criado com sucesso.")
+            st.dataframe(consolidated_df)
+            # Calcular o produto das colunas 5 e 6 e somar os resultados
+            soma_produto = (consolidated_df.iloc[:, 5] * consolidated_df.iloc[:, 6]).sum()
+            soma_shares = (consolidated_df.iloc[:, 5]).sum()
+            st.write(f"A comissão consolidada para o período é de: {soma_produto:.2f} dólares")
+            st.write(f"Total de shares é de: {soma_shares:.2f}")
+
+            # Opção de download do DataFrame como Excel
+            towrite = StringIO()
+            consolidated_df.to_excel(towrite, index=False, engine='xlsxwriter')
+            towrite.seek(0)
+            st.download_button(label="Baixar Excel", data=towrite, file_name='comissoes.xlsx', mime='application/vnd.ms-excel')
+        else:
+            st.write("Nenhum dado encontrado para o período selecionado.")
+
+
+    
+    
 
 
 
