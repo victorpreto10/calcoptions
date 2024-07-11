@@ -388,7 +388,7 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
     "Escolha uma opção:",
-    ('Home','Spreads Arb',"XML Opção",'Consolidado opções',"Update com participação",'Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Comissions','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
+    ('Home','Spreads Arb',"XML Opção",'Estrutura a Termo de Vol','Consolidado opções',"Update com participação",'Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Comissions','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
 ))
 if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
@@ -986,7 +986,53 @@ elif opcao == 'Comissions':
             st.download_button(label="Baixar Excel", data=towrite, file_name='comissoes.xlsx', mime='application/vnd.ms-excel')
         else:
             st.write("Nenhum dado encontrado para o período selecionado.")
+            
+elif opcao == 'Estrutura a Termo de Vol':
+    st.title('Projeção de Volatilidade com GARCH')
 
+    # Inputs do usuário
+    st.sidebar.header('Parâmetros')
+    asset = st.sidebar.text_input('Ativo', value='^BVSP')
+    start_date = st.sidebar.date_input('Data de Início', value=pd.to_datetime('2023-01-01'))
+    end_date = st.sidebar.date_input('Data de Fim', value=pd.to_datetime('2024-07-01'))
+    forecast_horizon = st.sidebar.number_input('Horizonte de Previsão (dias)', min_value=1, max_value=365, value=30)
+    
+    # Baixar os dados históricos
+    data = yf.download(asset, start=start_date, end=end_date)
+    returns = 100 * data['Adj Close'].pct_change().dropna()
+    
+    # Ajustar um modelo GARCH(1,1)
+    model = arch_model(returns, vol='Garch', p=1, q=1)
+    model_fit = model.fit(disp='off')
+    st.write(model_fit.summary())
+    
+    # Prever a volatilidade futura
+    forecasts = model_fit.forecast(horizon=forecast_horizon)
+    vol_forecast_daily = np.sqrt(forecasts.variance.values[-1, :])
+    vol_forecast_annual = vol_forecast_daily * np.sqrt(252)
+    
+    # Estrutura a termo de volatilidade
+    dates = pd.date_range(start=returns.index[-1], periods=forecast_horizon, freq='B')
+    vol_df = pd.DataFrame({'Date': dates, 'Volatility': vol_forecast_annual})
+    vol_df.set_index('Date', inplace=True)
+    
+    # Plotar a estrutura a termo de volatilidade anualizada
+    plt.figure(figsize=(10, 6))
+    plt.plot(vol_df.index, vol_df['Volatility'], marker='o')
+    plt.title(f'Estrutura a Termo de Volatilidade Anualizada para {asset}')
+    plt.xlabel('Data')
+    plt.ylabel('Volatilidade Anualizada (%)')
+    plt.grid(True)
+    st.pyplot(plt)
+    
+    # Salvar a estrutura a termo de volatilidade em um arquivo CSV
+    csv = vol_df.to_csv().encode('utf-8')
+    st.download_button(
+        label="Download CSV",
+        data=csv,
+        file_name='volatility_term_structure.csv',
+        mime='text/csv',
+    )
 
     
     
