@@ -27,6 +27,17 @@ import re
 from io import BytesIO
 import requests
 
+def download_data(asset, start, end, max_retries=5):
+    for i in range(max_retries):
+        try:
+            data = yf.download(asset, start=start, end=end)
+            return data
+        except Exception as e:
+            st.warning(f"Tentativa {i+1} falhou. Tentando novamente...")
+            time.sleep(2)
+    st.error("Falha ao baixar dados após múltiplas tentativas.")
+    return None
+
 
 def process_data(start_date, end_date):
     outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
@@ -997,43 +1008,43 @@ elif opcao == 'Estrutura a Termo de Vol':
     end_date = st.sidebar.date_input('Data de Fim', value=pd.to_datetime('2024-07-01'))
     forecast_horizon = st.sidebar.number_input('Horizonte de Previsão (dias)', min_value=1, max_value=365, value=30)
     
-    # Baixar os dados históricos
-    data = yf.download(asset, start=start_date, end=end_date)
-    returns = 100 * data['Adj Close'].pct_change().dropna()
-    
-    # Ajustar um modelo GARCH(1,1)
-    model = arch_model(returns, vol='Garch', p=1, q=1)
-    model_fit = model.fit(disp='off')
-    st.write(model_fit.summary())
-    
-    # Prever a volatilidade futura
-    forecasts = model_fit.forecast(horizon=forecast_horizon)
-    vol_forecast_daily = np.sqrt(forecasts.variance.values[-1, :])
-    vol_forecast_annual = vol_forecast_daily * np.sqrt(252)
-    
-    # Estrutura a termo de volatilidade
-    dates = pd.date_range(start=returns.index[-1], periods=forecast_horizon, freq='B')
-    vol_df = pd.DataFrame({'Date': dates, 'Volatility': vol_forecast_annual})
-    vol_df.set_index('Date', inplace=True)
-    
-    # Plotar a estrutura a termo de volatilidade anualizada
-    plt.figure(figsize=(10, 6))
-    plt.plot(vol_df.index, vol_df['Volatility'], marker='o')
-    plt.title(f'Estrutura a Termo de Volatilidade Anualizada para {asset}')
-    plt.xlabel('Data')
-    plt.ylabel('Volatilidade Anualizada (%)')
-    plt.grid(True)
-    st.pyplot(plt)
-    
-    # Salvar a estrutura a termo de volatilidade em um arquivo CSV
-    csv = vol_df.to_csv().encode('utf-8')
-    st.download_button(
-        label="Download CSV",
-        data=csv,
-        file_name='volatility_term_structure.csv',
-        mime='text/csv',
-    )
+    # Baixar os dados históricos com tentativa de repetição em caso de falha
+    data = download_data(asset, start_date, end_date)
+    if data is not None:
+        returns = 100 * data['Adj Close'].pct_change().dropna()
 
+        # Ajustar um modelo GARCH(1,1)
+        model = arch_model(returns, vol='Garch', p=1, q=1)
+        model_fit = model.fit(disp='off')
+        st.write(model_fit.summary())
+
+        # Prever a volatilidade futura
+        forecasts = model_fit.forecast(horizon=forecast_horizon)
+        vol_forecast_daily = np.sqrt(forecasts.variance.values[-1, :])
+        vol_forecast_annual = vol_forecast_daily * np.sqrt(252)
+
+        # Estrutura a termo de volatilidade
+        dates = pd.date_range(start=returns.index[-1], periods=forecast_horizon, freq='B')
+        vol_df = pd.DataFrame({'Date': dates, 'Volatility': vol_forecast_annual})
+        vol_df.set_index('Date', inplace=True)
+
+        # Plotar a estrutura a termo de volatilidade anualizada
+        plt.figure(figsize=(10, 6))
+        plt.plot(vol_df.index, vol_df['Volatility'], marker='o')
+        plt.title(f'Estrutura a Termo de Volatilidade Anualizada para {asset}')
+        plt.xlabel('Data')
+        plt.ylabel('Volatilidade Anualizada (%)')
+        plt.grid(True)
+        st.pyplot(plt)
+
+        # Salvar a estrutura a termo de volatilidade em um arquivo CSV
+        csv = vol_df.to_csv().encode('utf-8')
+        st.download_button(
+            label="Download CSV",
+            data=csv,
+            file_name='volatility_term_structure.csv',
+            mime='text/csv',
+        )
     
     
 
