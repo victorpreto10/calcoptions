@@ -26,6 +26,14 @@ from io import StringIO
 import re
 from io import BytesIO
 import requests
+import streamlit as st
+import pandas as pd
+import yfinance as yf
+from arch import arch_model
+import numpy as np
+import matplotlib.pyplot as plt
+import time  
+
 
 def download_data(asset, start, end, max_retries=5):
     for i in range(max_retries):
