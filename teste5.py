@@ -791,30 +791,30 @@ elif opcao == 'Planilha SPX':
         linhas_cash = processar_dados_cash(dados_cash)
         linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
 
-    if planilha_murilo:
-        linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
-        df_futuros = pd.DataFrame(linhas_futuros, columns=["Strategy", "Date", "Future", "Trader", "Dealer", "Settle Dealer", "Rate", "Amount"])
-    else:
-        linhas_futuros = processar_dados_futuros(dados_futuros)
-        df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
-
-    # Consolidando todos os dados
-    linhas_cash_total = linhas_cash + linhas_cash_inoa
-    df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
+        if planilha_murilo:
+            linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["Strategy", "Date", "Future", "Trader", "Dealer", "Settle Dealer", "Rate", "Amount"])
+        else:
+            linhas_futuros = processar_dados_futuros(dados_futuros)
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+    
+        # Consolidando todos os dados
+        linhas_cash_total = linhas_cash + linhas_cash_inoa
+        df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
 
     # Gerar Excel
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_cash.to_excel(writer, sheet_name='CASH', index=False)
-        df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
-    output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
-
-    today = datetime.now().strftime('%m_%d_%y')
-    nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
-
-    st.download_button(label="Baixar Dados em Excel",
-                       data=output,
-                       file_name=nome_do_arquivo_final,
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_cash.to_excel(writer, sheet_name='CASH', index=False)
+            df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
+        output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
+    
+        today = datetime.now().strftime('%m_%d_%y')
+        nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
+    
+        st.download_button(label="Baixar Dados em Excel",
+                           data=output,
+                           file_name=nome_do_arquivo_final,
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
