@@ -195,6 +195,8 @@ def parse_trade_instructions_adjusted(text):
 
     return table1, table2
 
+data_hoje = datetime.now().strftime('%Y-%m-%d')
+
 def processar_dados_cash(dado):
     if not dado.strip():  # Verifica se o dado está vazio ou contém apenas espaços
         return []
@@ -208,7 +210,6 @@ def processar_dados_cash(dado):
         qtde = float(qtde) * (-1 if operacao == 'V' else 1)
         linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
     return linhas
-
 
 def processar_dados_futuros(dado):
     linhas = []
@@ -232,6 +233,18 @@ def processar_dados_inoa_cash(dado):
             preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+    return linhas
+
+def processar_dados_futuros_murilo(dado):
+    linhas = []
+    for linha in dado.strip().split('\n'):
+        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
+        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+            operacao, produto, qtde, preco = partes
+            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
+            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = float(qtde) * (-1 if operacao == 'S' else 1)
+            linhas.append(["", data_hoje, produto, "Murilo Ortiz", "LIQUIDEZ", "ITAU", float(preco), qtde])
     return linhas
     
 def process_file(uploaded_file):
@@ -769,35 +782,40 @@ elif opcao == 'Planilha SPX':
         trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
         nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
         dados_cash = st.text_area("Cole os dados de CASH aqui:            ex: V PETR4 159.362 @ 40,382615 ", height=150)
-        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:   S	PETR3	639,342	41.779994             ", height=150)
-        dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B	WDOK24	6	5,241.00000000", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:   S PETR3 639,342 41.779994             ", height=150)
+        dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B WDOK24 6 5,241.00000000", height=150)
+        planilha_murilo = st.checkbox("Planilha do Murilo?")
         submitted = st.form_submit_button("Processar e Baixar Excel")
-    
+
     if submitted:
         linhas_cash = processar_dados_cash(dados_cash)
         linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
-        linhas_futuros = processar_dados_futuros(dados_futuros)
-    
-        # Consolidando todos os dados
-        linhas_cash_total = linhas_cash + linhas_cash_inoa
-        df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
-        df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
-        
-    
-        # Gerar Excel
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_cash.to_excel(writer, sheet_name='CASH', index=False)
-            df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
-        output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
 
-        today = datetime.now().strftime('%m_%d_%y')
-        nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
-        
-        st.download_button(label="Baixar Dados em Excel",
-                           data=output,
-                           file_name=nome_do_arquivo_final,
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    if planilha_murilo:
+        linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
+        df_futuros = pd.DataFrame(linhas_futuros, columns=["Strategy", "Date", "Future", "Trader", "Dealer", "Settle Dealer", "Rate", "Amount"])
+    else:
+        linhas_futuros = processar_dados_futuros(dados_futuros)
+        df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+
+    # Consolidando todos os dados
+    linhas_cash_total = linhas_cash + linhas_cash_inoa
+    df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
+
+    # Gerar Excel
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_cash.to_excel(writer, sheet_name='CASH', index=False)
+        df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
+    output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
+
+    today = datetime.now().strftime('%m_%d_%y')
+    nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
+
+    st.download_button(label="Baixar Dados em Excel",
+                       data=output,
+                       file_name=nome_do_arquivo_final,
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 elif opcao == 'Basket Fidessa':
