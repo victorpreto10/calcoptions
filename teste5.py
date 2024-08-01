@@ -869,8 +869,8 @@ elif opcao == 'Basket Fidessa':
         
         # Optional: Display the tables in Streamlit
               # Display quantities sum
-            st.write("Quantities Sum by side: ")
-            st.write(quantities_sum_table1)
+        st.write("Quantities Sum by side: ")
+        st.write(quantities_sum_table1)
 
 elif opcao == 'Notional to shares':
     st.title("Notional to Shares Calculator")
