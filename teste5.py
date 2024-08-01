@@ -177,30 +177,23 @@ def sum_quantities_by_operation(df):
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
-def parse_trade_instructions_adjusted(text, format_type, language):
+def parse_trade_instructions_adjusted(text):
     lines = text.strip().split('\n')
     table1 = []
     table2 = []
 
-    operation_map = {'S': 'S', 'B': 'B', 'V': 'S', 'C': 'B'} if language == 'English' else {'S': 'V', 'B': 'C', 'V': 'V', 'C': 'C'}
     for line in lines:
         words = line.split()
         if len(words) >= 3:
-            if format_type == "Side, Quantity, Ticker":
-                operation, quantity, ticker = operation_map[words[0]], words[1], words[2]
-            elif format_type == "Side, Ticker, Quantity":
-                operation, ticker, quantity = operation_map[words[0]], words[1], words[2]
-
-            quantity = quantity.replace(",", "")
-            ticker = ticker.split('.')[0].upper()
-            operation = 'S' if operation in ('S', 'SS', 'V') else 'B'
+            operation = 'S' if words[0] in ('S', 'SS') else 'B'
+            quantity = words[1].replace(",", "")
+            ticker = words[2].split('.')[0].upper()
 
             table1.append([operation, f'{ticker}.US', int(quantity)])
             inverted_operation = 'B' if operation == 'S' else 'S'
             table2.append([inverted_operation, f'{ticker}.US', int(quantity)])
 
     return table1, table2
-
 
 data_hoje = datetime.now().strftime('%Y-%m-%d')
 
@@ -828,24 +821,23 @@ elif opcao == 'Planilha SPX':
 elif opcao == 'Basket Fidessa':
     st.title("Basket Fidessa")
     
-    cliente = st.text_input("Nome do Cliente")
+    cliente = st.text_input("Nome do Cliente",)
     trade_text = st.text_area("Enter Trade Instructions:", height=300, value="S 506 ABBV\nS 500 AMZN\n...")
     
-    format_type = st.selectbox("Select the format of the trade instructions:",
-                               ["Side, Quantity, Ticker", "Side, Ticker, Quantity"])
-    language = st.selectbox("Select the language of the trade instructions:",
-                            ["English", "Portuguese"])
-    
     if st.button("Generate Baskets"):
-        table1, table2 = parse_trade_instructions_adjusted(trade_text, format_type, language)
-    
+        table1, table2 = parse_trade_instructions_adjusted(trade_text)
+        
         df_table1 = pd.DataFrame(table1, columns=['Type', 'Ticker', 'Quantity'])
         df_table2 = pd.DataFrame(table2, columns=['Type', 'Ticker', 'Quantity'])
     
         today = datetime.now().strftime('%m-%d-%Y')
+    
+        # Add zero column
         df_table1['Zero'] = 0
         df_table2['Zero'] = 0
+        quantities_sum_table1 = sum_quantities_by_operation(df_table1)
     
+        # Saving dataframes to CSV in memory
         output1 = BytesIO()
         df_table1.to_csv(output1, index=False)
         output1.seek(0)
@@ -858,17 +850,10 @@ elif opcao == 'Basket Fidessa':
         file_name2 = f"{cliente}_BASKET_{today}_table2.csv"
     
         st.download_button("Download Table 1", data=output1, file_name=file_name1, mime='text/csv')
-        st.download_button("Download Table 2", data=output2, file_name=file_name2, mime='text/csv')
-    
-        # Opcional: Exibir as tabelas
-        st.write("Table 1:")
-        st.dataframe(df_table1)
-        st.write("Table 2:")
-        st.dataframe(df_table2)
-            
         
-        # Optional: Display the tables in Streamlit
-              # Display quantities sum
+    
+    # Optional: Display the tables in Streamlit
+          # Display quantities sum
         st.write("Quantities Sum by side: ")
         st.write(quantities_sum_table1)
 
