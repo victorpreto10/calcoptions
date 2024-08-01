@@ -35,50 +35,6 @@ import matplotlib.pyplot as plt
 import time  
 
 
-@st.cache_data
-def salvar_planilha_cache(nome_arquivo, df_cash, df_futuros):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_cash.to_excel(writer, sheet_name='CASH', index=False)
-        df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
-    output.seek(0)
-    return output.getvalue()
-
-@st.cache_data
-def recuperar_planilhas_cache():
-    # Esta função pode retornar um dicionário com os arquivos cacheados, ou outra estrutura que faça sentido
-    return {}
-
-def exibir_planilhas_abas(df_cash, df_futuros):
-    with st.tabs(["CASH", "FUTUROS"]):
-        with st.tab("CASH"):
-            st.dataframe(df_cash)
-        with st.tab("FUTUROS"):
-            st.dataframe(df_futuros)
-
-def processar_e_armazenar_dados(dados_cash, dados_cash_inoa, dados_futuros, planilha_murilo, nome_arquivo):
-    linhas_cash = processar_dados_cash(dados_cash)
-    linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
-
-    if planilha_murilo:
-        linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
-        df_futuros = pd.DataFrame(linhas_futuros, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
-    else:
-        linhas_futuros = processar_dados_futuros(dados_futuros)
-        df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
-
-    linhas_cash_total = linhas_cash + linhas_cash_inoa
-    df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
-
-    excel_bytes = salvar_planilha_cache(nome_arquivo, df_cash, df_futuros)
-    
-    # Aqui você poderia salvar em um cache mais permanente ou exibir diretamente
-    return df_cash, df_futuros, excel_bytes
-
-
-
-
-
 def download_data(asset, start, end, max_retries=5):
     for i in range(max_retries):
         try:
@@ -832,17 +788,19 @@ elif opcao == 'Planilha SPX':
         submitted = st.form_submit_button("Processar e Baixar Excel")
 
     if submitted:
-        df_cash, df_futuros, excel_bytes = processar_e_armazenar_dados(dados_cash, dados_cash_inoa, dados_futuros, planilha_murilo, nome_arquivo)
-    
-        today = datetime.now().strftime('%m_%d_%y')
-        nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
-    
-        st.download_button(label="Baixar Dados em Excel", data=excel_bytes,
-                           file_name=nome_do_arquivo_final,
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    
-        exibir_planilhas_abas(df_cash, df_futuros)
+        linhas_cash = processar_dados_cash(dados_cash)
+        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
 
+        if planilha_murilo:
+            linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
+        else:
+            linhas_futuros = processar_dados_futuros(dados_futuros)
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+    
+        # Consolidando todos os dados
+        linhas_cash_total = linhas_cash + linhas_cash_inoa
+        df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
 
     # Gerar Excel
         output = BytesIO()
