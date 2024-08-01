@@ -793,7 +793,7 @@ elif opcao == 'Planilha SPX':
 
         if planilha_murilo:
             linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
-            df_futuros = pd.DataFrame(linhas_futuros, columns=["Strategy", "Date", "Future", "Trader", "Dealer", "Settle Dealer", "Rate", "Amount"])
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
         else:
             linhas_futuros = processar_dados_futuros(dados_futuros)
             df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
