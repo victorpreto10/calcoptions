@@ -768,7 +768,7 @@ elif opcao == 'Planilha SPX':
                            data=output,
                            file_name=nome_do_arquivo_final,
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                           
 
 
 elif opcao == 'Basket Fidessa':
