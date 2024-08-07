@@ -250,17 +250,18 @@ def processar_dados_inoa_cash(dado, data_hoje):
     return linhas
 
 
-def processar_dados_futuros_murilo(dado):
+def processar_dados_futuros_murilo(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
-        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+        partes = linha.split('\t')
+        if len(partes) == 4:
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
-            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '')
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append(["", data_hoje, produto, "Murilo Ortiz", "LIQUIDEZ", "ITAU", float(preco), qtde])
     return linhas
+
     
 def process_file(uploaded_file):
     df = pd.read_excel(uploaded_file, header=1)
