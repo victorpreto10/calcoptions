@@ -147,40 +147,22 @@ def sum_quantities_by_operation(df):
     # Group the DataFrame by the 'Type' and sum the 'Quantity' column
     quantities_sum = df.groupby('Type')['Quantity'].sum().to_dict()
     return quantities_sum
-
 getcontext().prec = 28  # Definir precisão para operações Decimal
-
-def parse_trade_instructions_adjusted(text, format_type, language):
 def parse_trade_instructions_adjusted(text):
     lines = text.strip().split('\n')
     table1 = []
     table2 = []
-
-    operation_map = {'S': 'S', 'B': 'B', 'V': 'S', 'C': 'B'} if language == 'English' else {'S': 'V', 'B': 'C', 'V': 'V', 'C': 'C'}
     for line in lines:
         words = line.split()
         if len(words) >= 3:
-            if format_type == "Side, Quantity, Ticker":
-                operation, quantity, ticker = operation_map[words[0]], words[1], words[2]
-            elif format_type == "Side, Ticker, Quantity":
-                operation, ticker, quantity = operation_map[words[0]], words[1], words[2]
-
-            quantity = quantity.replace(",", "")
-            ticker = ticker.split('.')[0].upper()
-            operation = 'S' if operation in ('S', 'SS', 'V') else 'B'
             operation = 'S' if words[0] in ('S', 'SS') else 'B'
             quantity = words[1].replace(",", "")
             ticker = words[2].split('.')[0].upper()
-
             table1.append([operation, f'{ticker}.US', int(quantity)])
             inverted_operation = 'B' if operation == 'S' else 'S'
             table2.append([inverted_operation, f'{ticker}.US', int(quantity)])
-
     return table1, table2
-
-
 data_hoje = datetime.now().strftime('%Y-%m-%d')
-
 def processar_dados_cash(dado):
     if not dado.strip():  # Verifica se o dado está vazio ou contém apenas espaços
         return []
@@ -194,17 +176,27 @@ def processar_dados_cash(dado):
         qtde = float(qtde) * (-1 if operacao == 'V' else 1)
         linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
     return linhas
+
 def processar_dados_futuros(dado):
+def processar_dados_futuros(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
         partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
         if len(partes) == 4:  # Verifica se a linha tem 4 partes
+        partes = linha.split('\t')
+        if len(partes) == 4:
             operacao, produto, qtde, preco = partes
             qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
             preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '')
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append([data_hoje, produto, qtde, float(preco), "Bloomberg", "", trader, "LIQUIDEZ", "ITAU"])
+            # Determinar o Book baseado no nome do produto
+            book = "Hedge" if produto.startswith(("WDO", "DOL")) else "Direcional_Indice"
+            linhas.append([data_hoje, produto, qtde, float(preco), book, "", trader, "LIQUIDEZ", "ITAU"])
     return linhas
+
 def processar_dados_inoa_cash(dado):
     linhas = []
     for linha in dado.strip().split('\n'):
@@ -702,62 +694,102 @@ elif opcao == 'Planilha SPX':
         dados_cash = st.text_area("Cole os dados de CASH aqui:            ex: V PETR4 159.362 @ 40,382615 ", height=150)
         dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:   S PETR3 639,342 41.779994             ", height=150)
         dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B WDOK24 6 5,241.00000000", height=150)
+        dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
+
+        # Novo input para permitir adicionar e nomear novas abas e inserir dados
+        adicionar_abas_futuros = st.checkbox("Adicionar novas abas para Futuros?")
+        abas_futuros_dados = {}
+
+        if adicionar_abas_futuros:
+            qtde_abas = st.number_input("Quantas abas deseja adicionar?", min_value=1, max_value=10, value=1)
+            for i in range(qtde_abas):
+                nome_aba = st.text_input(f"Nome da Aba {i+1}", value=f"Futuro_{i+1}")
+                dados_futuros = st.text_area(f"Cole os dados para {nome_aba}:", height=150)
+                abas_futuros_dados[nome_aba] = dados_futuros
+
         planilha_murilo = st.checkbox("Planilha do Murilo?")
         submitted = st.form_submit_button("Processar e Baixar Excel")
+
     if submitted:
         linhas_cash = processar_dados_cash(dados_cash)
         linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
+
         if planilha_murilo:
             linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
             df_futuros = pd.DataFrame(linhas_futuros, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
         else:
             linhas_futuros = processar_dados_futuros(dados_futuros)
             df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
-    
+
         # Consolidando todos os dados
+    if submitted:
+        data_hoje = datetime.now().strftime('%d/%m/%Y')
+
+        # Processar dados CASH
+        linhas_cash = processar_dados_cash(dados_cash, data_hoje)
+        linhas_cash_inoa = processar_dados_cash(dados_cash_inoa, data_hoje)
+
+        # Consolidando todos os dados de CASH
         linhas_cash_total = linhas_cash + linhas_cash_inoa
         df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
+
     # Gerar Excel
+
+        # Processar dados FUTUROS
+        futuros_dfs = {}
+        for nome_aba, dados in abas_futuros_dados.items():
+            linhas_futuros = processar_dados_futuros(dados, data_hoje)
+            futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+
+        # Gerar Excel
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_cash.to_excel(writer, sheet_name='CASH', index=False)
             df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
         output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
-    
+
+
+            # Adicionando abas para futuros
+            for nome_aba, df_futuros in futuros_dfs.items():
+                df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
+
+            if planilha_murilo:
+                # Preserva a planilha do Murilo
+                df_futuros_murilo = pd.DataFrame(processar_dados_futuros_murilo(dados_futuros), columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
+                df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
+
+        output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
         nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
-    
+
+        
         st.download_button(label="Baixar Dados em Excel",
                            data=output,
                            file_name=nome_do_arquivo_final,
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
 elif opcao == 'Basket Fidessa':
     st.title("Basket Fidessa")
-
-    cliente = st.text_input("Nome do Cliente")
+    
     cliente = st.text_input("Nome do Cliente",)
     trade_text = st.text_area("Enter Trade Instructions:", height=300, value="S 506 ABBV\nS 500 AMZN\n...")
-
-    format_type = st.selectbox("Select the format of the trade instructions:",
-                               ["Side, Quantity, Ticker", "Side, Ticker, Quantity"])
-    language = st.selectbox("Select the language of the trade instructions:",
-                            ["English", "Portuguese"])
-
+    
     if st.button("Generate Baskets"):
-        table1, table2 = parse_trade_instructions_adjusted(trade_text, format_type, language)
-
         table1, table2 = parse_trade_instructions_adjusted(trade_text)
         
         df_table1 = pd.DataFrame(table1, columns=['Type', 'Ticker', 'Quantity'])
         df_table2 = pd.DataFrame(table2, columns=['Type', 'Ticker', 'Quantity'])
-
+    
         today = datetime.now().strftime('%m-%d-%Y')
-
+    
         # Add zero column
         df_table1['Zero'] = 0
         df_table2['Zero'] = 0
         quantities_sum_table1 = sum_quantities_by_operation(df_table1)
-
+    
         # Saving dataframes to CSV in memory
         output1 = BytesIO()
         df_table1.to_csv(output1, index=False)
@@ -769,25 +801,14 @@ elif opcao == 'Basket Fidessa':
     
         file_name1 = f"{cliente}_BASKET_{today}_table1.csv"
         file_name2 = f"{cliente}_BASKET_{today}_table2.csv"
-
+    
         st.download_button("Download Table 1", data=output1, file_name=file_name1, mime='text/csv')
-        st.download_button("Download Table 2", data=output2, file_name=file_name2, mime='text/csv')
-
-        # Opcional: Exibir as tabelas
-        st.write("Table 1:")
-        st.dataframe(df_table1)
-        st.write("Table 2:")
-        st.dataframe(df_table2)
-
-
-        # Optional: Display the tables in Streamlit
-              # Display quantities sum
-
+        
+    
     # Optional: Display the tables in Streamlit
           # Display quantities sum
         st.write("Quantities Sum by side: ")
         st.write(quantities_sum_table1)
-
 elif opcao == 'Notional to shares':
     st.title("Notional to Shares Calculator")
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
@@ -977,6 +998,3 @@ elif opcao == 'Estrutura a Termo de Vol':
             file_name='volatility_term_structure.csv',
             mime='text/csv',
         )
-    
-    
-                                                       
