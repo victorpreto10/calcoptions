@@ -841,9 +841,9 @@ elif opcao == 'Planilha SPX':
             
         
            if planilha_murilo:
-                dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
-                linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
-                df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
+               dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
+               linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
+               df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
         
         output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
