@@ -816,7 +816,7 @@ elif opcao == 'Planilha SPX':
         
         # Processar dados CASH
         linhas_cash = processar_dados_cash(dados_cash, data_hoje)
-        linhas_cash_inoa = processar_dados_cash(dados_cash_inoa, data_hoje)
+        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa, data_hoje)
         
         # Consolidando todos os dados de CASH
         linhas_cash_total = linhas_cash + linhas_cash_inoa
@@ -838,9 +838,7 @@ elif opcao == 'Planilha SPX':
                 df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
             
             if planilha_murilo:
-                # Preserva a planilha do Murilo
-                df_futuros_murilo = pd.DataFrame(processar_dados_futuros_murilo(dados_futuros), columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
-                df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
+                st.warning("Planilha do Murilo foi marcada, mas a função correspondente não está definida.")
         
         output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
