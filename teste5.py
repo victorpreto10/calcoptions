@@ -797,9 +797,9 @@ elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
     if st.button("Adicionar uma nova aba para Futuros"):
-        nova_aba_key = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
-        st.session_state.abas_futuros[nova_aba_key] = {"nome": "", "dados": ""}
-        st.write(f"Aba {nova_aba_key} adicionada.")
+        nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
+        st.session_state.abas_futuros.append(nova_aba)
+        st.session_state.dados_futuros[nova_aba] = ""
     
     # Formulário principal
     with st.form("input_form"):
@@ -808,12 +808,9 @@ elif opcao == 'Planilha SPX':
         dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
         dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
         
-        # Exibir caixas de texto para nome e dados de cada aba de futuros
-        for aba_key in st.session_state.abas_futuros:
-            aba_data = st.session_state.abas_futuros[aba_key]
-            aba_data["nome"] = st.text_input(f"Nome da Aba para {aba_key}:", value=aba_data["nome"], key=f"nome_{aba_key}")
-            aba_data["dados"] = st.text_area(f"Cole os dados para {aba_data['nome'] or aba_key}:", height=150, key=f"dados_{aba_key}")
-            st.session_state.abas_futuros[aba_key] = aba_data
+        # Exibir caixas de texto para cada aba de futuros
+        for aba in st.session_state.abas_futuros:
+            st.session_state.dados_futuros[aba] = st.text_area(f"Cole os dados para {aba}:", height=150, key=aba)
         
         planilha_murilo = st.checkbox("Planilha do Murilo?")
         submitted = st.form_submit_button("Processar e Baixar Excel")
@@ -831,10 +828,7 @@ elif opcao == 'Planilha SPX':
         
         # Processar dados FUTUROS
         futuros_dfs = {}
-        for aba_key, aba_data in st.session_state.abas_futuros.items():
-            st.write(f"Processando dados para a aba: {aba_data['nome'] or aba_key}")
-            nome_aba = aba_data["nome"] or aba_key
-            dados = aba_data["dados"]
+        for nome_aba, dados in st.session_state.dados_futuros.items():
             linhas_futuros = processar_dados_futuros(dados, data_hoje)
             futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
 
@@ -850,12 +844,12 @@ elif opcao == 'Planilha SPX':
             
             # Adicionando abas para futuros
             for nome_aba, df_futuros in futuros_dfs.items():
-                st.write(f"Adicionando aba: {nome_aba}")
                 df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
             
             if planilha_murilo:
                 df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
 
+        
         output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
         nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
