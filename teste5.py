@@ -38,7 +38,7 @@ import time
 
 
 if "abas_futuros" not in st.session_state:
-    st.session_state.abas_futuros = []
+    st.session_state.abas_futuros = {}  # Certifique-se de que abas_futuros é um dicionário
 if "dados_futuros" not in st.session_state:
     st.session_state.dados_futuros = {}
 
