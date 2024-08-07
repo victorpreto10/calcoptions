@@ -35,6 +35,14 @@ import matplotlib.pyplot as plt
 import time  
 
 
+
+
+if "abas_futuros" not in st.session_state:
+    st.session_state.abas_futuros = []
+if "dados_futuros" not in st.session_state:
+    st.session_state.dados_futuros = {}
+
+
 def download_data(asset, start, end, max_retries=5):
     for i in range(max_retries):
         try:
@@ -786,16 +794,15 @@ elif opcao == 'Planilha SPX':
         dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
         dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
         
-        # Novo input para permitir adicionar e nomear novas abas e inserir dados
-        adicionar_abas_futuros = st.checkbox("Adicionar novas abas para Futuros?")
-        abas_futuros_dados = {}
-        
-        if adicionar_abas_futuros:
-            qtde_abas = st.number_input("Quantas abas deseja adicionar?", min_value=1, max_value=10, value=1)
-            for i in range(qtde_abas):
-                nome_aba = st.text_input(f"Nome da Aba {i+1}", value=f"Futuro_{i+1}")
-                dados_futuros = st.text_area(f"Cole os dados para {nome_aba}:", height=150)
-                abas_futuros_dados[nome_aba] = dados_futuros
+        # Botão para adicionar novas abas para futuros
+        if st.button("Adicionar uma nova aba para Futuros"):
+            nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
+            st.session_state.abas_futuros.append(nova_aba)
+            st.session_state.dados_futuros[nova_aba] = ""
+    
+        # Exibir caixas de texto para cada aba de futuros
+        for aba in st.session_state.abas_futuros:
+            st.session_state.dados_futuros[aba] = st.text_area(f"Cole os dados para {aba}:", height=150, key=aba)
         
         planilha_murilo = st.checkbox("Planilha do Murilo?")
         submitted = st.form_submit_button("Processar e Baixar Excel")
@@ -813,7 +820,7 @@ elif opcao == 'Planilha SPX':
         
         # Processar dados FUTUROS
         futuros_dfs = {}
-        for nome_aba, dados in abas_futuros_dados.items():
+        for nome_aba, dados in st.session_state.dados_futuros.items():
             linhas_futuros = processar_dados_futuros(dados, data_hoje)
             futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
         
