@@ -788,18 +788,18 @@ elif opcao == 'Niveis Kapitalo':
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
+    if st.button("Adicionar uma nova aba para Futuros"):
+        nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
+        st.session_state.abas_futuros.append(nova_aba)
+        st.session_state.dados_futuros[nova_aba] = ""
+    
+    # Formulário principal
     with st.form("input_form"):
         trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
         nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
         dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
         dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
         
-        # Botão para adicionar novas abas para futuros
-        if st.button("Adicionar uma nova aba para Futuros"):
-            nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
-            st.session_state.abas_futuros.append(nova_aba)
-            st.session_state.dados_futuros[nova_aba] = ""
-    
         # Exibir caixas de texto para cada aba de futuros
         for aba in st.session_state.abas_futuros:
             st.session_state.dados_futuros[aba] = st.text_area(f"Cole os dados para {aba}:", height=150, key=aba)
