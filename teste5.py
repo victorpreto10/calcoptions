@@ -839,8 +839,11 @@ elif opcao == 'Planilha SPX':
             for nome_aba, df_futuros in futuros_dfs.items():
                 df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
             
-            if planilha_murilo:
-                st.warning("Planilha do Murilo foi marcada, mas a função correspondente não está definida.")
+        
+           if planilha_murilo:
+                dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
+                linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
+                df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
         
         output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
