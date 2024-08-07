@@ -203,20 +203,24 @@ def parse_trade_instructions_adjusted(text):
 
     return table1, table2
 
-data_hoje = datetime.now().strftime('%Y-%m-%d')
+data_hoje = datetime.now().strftime('%d-%m-%Y')
 
-def processar_dados_cash(dado):
-    if not dado.strip():  # Verifica se o dado está vazio ou contém apenas espaços
+def processar_dados_cash(dado, data_hoje):
+    if not dado.strip():
         return []
     
     linhas = []
     for linha in dado.strip().split('\n'):
-        operacao, produto, resto = linha.split(' ', 2)
-        qtde, preco = resto.split(' @ ')
-        qtde = qtde.replace('.', '')  # Removendo pontos usados para milhares
-        preco = preco.replace('.', '').replace(',', '.')  # Convertendo formato BR para formato numérico aceitável em Python
-        qtde = float(qtde) * (-1 if operacao == 'V' else 1)
-        linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+        try:
+            operacao, produto, resto = linha.split(' ', 2)
+            qtde, preco = resto.split(' @ ')
+            qtde = qtde.replace('.', '')
+            preco = preco.replace('.', '').replace(',', '.')
+            qtde = float(qtde) * (-1 if operacao == 'V' else 1)
+            linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+        except ValueError:
+            st.error(f"Erro ao processar a linha: {linha}. Verifique o formato dos dados.")
+            continue
     return linhas
 
 def processar_dados_futuros(dado, data_hoje):
