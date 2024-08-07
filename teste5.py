@@ -861,7 +861,6 @@ elif opcao == 'Planilha SPX':
                                file_name=nome_do_arquivo_final,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-
 elif opcao == 'Basket Fidessa':
     st.title("Basket Fidessa")
     
