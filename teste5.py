@@ -799,64 +799,68 @@ elif opcao == 'Planilha SPX':
             st.session_state.abas_futuros[nova_aba_key] = {"nome": "", "dados": ""}
         
         # Formulário principal
-        with st.form("input_form"):
-            trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
-            nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
-            dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
-            dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
+    with st.form("input_form"):
+        trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
+        nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
+        dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
             
             # Exibir caixas de texto para nome e dados de cada aba de futuros
-            for aba_key in st.session_state.abas_futuros:
-                aba_data = st.session_state.abas_futuros[aba_key]
-                aba_data["nome"] = st.text_input(f"Nome da Aba para {aba_key}:", value=aba_data["nome"], key=f"nome_{aba_key}")
-                aba_data["dados"] = st.text_area(f"Cole os dados para {aba_data['nome'] or aba_key}:", height=150, key=f"dados_{aba_key}")
-                st.session_state.abas_futuros[aba_key] = aba_data
+        for aba_key in st.session_state.abas_futuros:
             
-            planilha_murilo = st.checkbox("Planilha do Murilo?")
-            submitted = st.form_submit_button("Processar e Baixar Excel")
+            aba_data = st.session_state.abas_futuros[aba_key]
+            aba_data["nome"] = st.text_input(f"Nome da Aba para {aba_key}:", value=aba_data["nome"], key=f"nome_{aba_key}")
+            aba_data["dados"] = st.text_area(f"Cole os dados para {aba_data['nome'] or aba_key}:", height=150, key=f"dados_{aba_key}")
+            st.session_state.abas_futuros[aba_key] = aba_data
+            
+        planilha_murilo = st.checkbox("Planilha do Murilo?")
+        submitted = st.form_submit_button("Processar e Baixar Excel")
         
-        if submitted:
-            data_hoje = datetime.now().strftime('%d/%m/%Y')
+    if submitted:
+        
+        data_hoje = datetime.now().strftime('%d/%m/%Y')
             
             # Processar dados CASH
-            linhas_cash = processar_dados_cash(dados_cash, data_hoje)
-            linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa, data_hoje)
+        linhas_cash = processar_dados_cash(dados_cash, data_hoje)
+        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa, data_hoje)
             
             # Consolidando todos os dados de CASH
-            linhas_cash_total = linhas_cash + linhas_cash_inoa
-            df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
+        linhas_cash_total = linhas_cash + linhas_cash_inoa
+        df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
             
             # Processar dados FUTUROS
-            futuros_dfs = {}
-            for aba_key, aba_data in st.session_state.abas_futuros.items():
-                nome_aba = aba_data["nome"] or aba_key
-                dados = aba_data["dados"]
-                linhas_futuros = processar_dados_futuros(dados, data_hoje)
-                futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+        futuros_dfs = {}
+        for aba_key, aba_data in st.session_state.abas_futuros.items():
+            
+            nome_aba = aba_data["nome"] or aba_key
+            dados = aba_data["dados"]
+            linhas_futuros = processar_dados_futuros(dados, data_hoje)
+            futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
     
-            if planilha_murilo:
-                dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
-                linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
-                df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
+        if planilha_murilo:
+            
+            dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
+            linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
+            df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
             
             # Gerar Excel
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_cash.to_excel(writer, sheet_name='CASH', index=False)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_cash.to_excel(writer, sheet_name='CASH', index=False)
                 
                 # Adicionando abas para futuros
-                for nome_aba, df_futuros in futuros_dfs.items():
-                    df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
+            for nome_aba, df_futuros in futuros_dfs.items():
+                df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
                 
-                if planilha_murilo:
-                    df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
+            if planilha_murilo:
+                df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
     
             
-            output.seek(0)
-            today = datetime.now().strftime('%m_%d_%y')
-            nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
+        output.seek(0)
+        today = datetime.now().strftime('%m_%d_%y')
+        nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
             
-            st.download_button(label="Baixar Dados em Excel",
+        st.download_button(label="Baixar Dados em Excel",
                                data=output,
                                file_name=nome_do_arquivo_final,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
