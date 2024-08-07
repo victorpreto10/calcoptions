@@ -237,17 +237,18 @@ def processar_dados_futuros(dado, data_hoje):
             linhas.append([data_hoje, produto, qtde, float(preco), book, "", trader, "LIQUIDEZ", "ITAU"])
     return linhas
 
-def processar_dados_inoa_cash(dado):
+def processar_dados_inoa_cash(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
-        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+        partes = linha.split('\t')
+        if len(partes) == 4:
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
-            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '')
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
     return linhas
+
 
 def processar_dados_futuros_murilo(dado):
     linhas = []
