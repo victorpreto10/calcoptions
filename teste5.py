@@ -790,13 +790,16 @@ elif opcao == 'Niveis Kapitalo':
             px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
             mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
 
-
+if "abas_futuros" not in st.session_state:
+    st.session_state.abas_futuros = {}
+    
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
     if st.button("Adicionar uma nova aba para Futuros"):
         nova_aba_key = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
         st.session_state.abas_futuros[nova_aba_key] = {"nome": "", "dados": ""}
+        st.write(f"Aba {nova_aba_key} adicionada.")
     
     # Formulário principal
     with st.form("input_form"):
@@ -829,6 +832,7 @@ elif opcao == 'Planilha SPX':
         # Processar dados FUTUROS
         futuros_dfs = {}
         for aba_key, aba_data in st.session_state.abas_futuros.items():
+            st.write(f"Processando dados para a aba: {aba_data['nome'] or aba_key}")
             nome_aba = aba_data["nome"] or aba_key
             dados = aba_data["dados"]
             linhas_futuros = processar_dados_futuros(dados, data_hoje)
@@ -846,12 +850,12 @@ elif opcao == 'Planilha SPX':
             
             # Adicionando abas para futuros
             for nome_aba, df_futuros in futuros_dfs.items():
+                st.write(f"Adicionando aba: {nome_aba}")
                 df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
             
             if planilha_murilo:
                 df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
 
-        
         output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
         nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
