@@ -33,16 +33,6 @@ from arch import arch_model
 import numpy as np
 import matplotlib.pyplot as plt
 import time  
-
-
-
-
-if "abas_futuros" not in st.session_state:
-    st.session_state.abas_futuros = {}  # Certifique-se de que abas_futuros é um dicionário
-if "dados_futuros" not in st.session_state:
-    st.session_state.dados_futuros = {}
-
-
 def download_data(asset, start, end, max_retries=5):
     for i in range(max_retries):
         try:
@@ -53,25 +43,18 @@ def download_data(asset, start, end, max_retries=5):
             time.sleep(2)
     st.error("Falha ao baixar dados após múltiplas tentativas.")
     return None
-
-
 def process_data(start_date, end_date):
     outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
     inbox = outlook.GetDefaultFolder(6)  # Caixa de Entrada
     sentbox = outlook.GetDefaultFolder(5)  # Itens Enviados
-
     consolidated_df = pd.DataFrame()
-
     for folder in [inbox, sentbox]:
         consolidated_df = pd.concat([consolidated_df, process_folder(folder, start_date, end_date)], ignore_index=True)
-
     if not consolidated_df.empty:
         consolidated_df.iloc[:, 5] = pd.to_numeric(consolidated_df.iloc[:, 5], errors='coerce')
         consolidated_df.iloc[:, 6] = pd.to_numeric(consolidated_df.iloc[:, 6], errors='coerce')
         consolidated_df.dropna(subset=[consolidated_df.columns[5], consolidated_df.columns[6]], inplace=True)
-
     return consolidated_df
-
 def process_folder(folder, start_date, end_date):
     df_list = []
     for single_date in (start_date + timedelta(days=n) for n in range((end_date - start_date).days + 1)):
@@ -91,11 +74,6 @@ def process_folder(folder, start_date, end_date):
             except Exception as e:
                 print(f"Erro ao processar o e-mail de {single_date.strftime('%d-%b')}: {e}")
     return pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
-
-
-
-
-
 def calculate_weighted_average(df):
     df['Weighted_Price'] = df['Price'] * df['Quantity']
     result_df = df.groupby(['Action', 'Ticker', 'Date', 'Option Type', 'Strike Price']).agg(
@@ -104,7 +82,6 @@ def calculate_weighted_average(df):
     ).reset_index()
     result_df['Average_Price'] = result_df['Total_Weighted_Price'] / result_df['Total_Quantity']
     return result_df.drop(columns=['Total_Weighted_Price'])
-
 def parse_data(data):
     # Usando StringIO para converter a string em um dataframe
     data = StringIO(data)
@@ -113,7 +90,6 @@ def parse_data(data):
     df.columns = df.columns.str.strip()
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     return df
-
 def calculate_average_price(df):
     if 'Maturity' not in df.columns:
         st.error("Column 'Maturity' is missing from the input. Please check your data and try again.")
@@ -130,16 +106,10 @@ def calculate_average_price(df):
         Total_Commission=('Commission', 'sum')
     ).reset_index()
     return grouped_df
-
-
-
 def format_date(date):
     return datetime.strptime(str(date), '%Y-%m-%d').strftime('%m/%d/%y')
-
-
 def format_date2(date):
     return datetime.strptime(str(date), '%Y-%m-%d').strftime('%d/%m/%Y')
-
 # Função para gerar a string XML
 def generate_xml(action, ticker, date, quantity, price, option_type, strike_price):
     formatted_date = format_date(date)
@@ -149,8 +119,6 @@ def generate_xml(action, ticker, date, quantity, price, option_type, strike_pric
     ticker_formatted = f"{ticker} US {formatted_date} {option_label}{int(strike_price)}"
     xml_string = f"{action_prefix};{ticker_formatted};{option_type};{int(strike_price)};{formatted_date2};{quantity};{price:.6f}"
     return xml_string
-
-
 data_hoje = datetime.now().strftime('%m/%d/%Y')
 def parse_number_input(input_str):
     input_str = input_str.lower().strip()
@@ -173,9 +141,6 @@ def get_real_time_price(ticker, api_key):
     else:
         st.error("Failed to fetch data from Finnhub.")
         return None
-
-
-
 def sum_quantities_by_operation(df):
     # Convert the 'Quantity' column to numeric type to sum up correctly
     df['Quantity'] = pd.to_numeric(df['Quantity'], errors='coerce').fillna(0)
@@ -185,14 +150,24 @@ def sum_quantities_by_operation(df):
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
+def parse_trade_instructions_adjusted(text, format_type, language):
 def parse_trade_instructions_adjusted(text):
     lines = text.strip().split('\n')
     table1 = []
     table2 = []
 
+    operation_map = {'S': 'S', 'B': 'B', 'V': 'S', 'C': 'B'} if language == 'English' else {'S': 'V', 'B': 'C', 'V': 'V', 'C': 'C'}
     for line in lines:
         words = line.split()
         if len(words) >= 3:
+            if format_type == "Side, Quantity, Ticker":
+                operation, quantity, ticker = operation_map[words[0]], words[1], words[2]
+            elif format_type == "Side, Ticker, Quantity":
+                operation, ticker, quantity = operation_map[words[0]], words[1], words[2]
+
+            quantity = quantity.replace(",", "")
+            ticker = ticker.split('.')[0].upper()
+            operation = 'S' if operation in ('S', 'SS', 'V') else 'B'
             operation = 'S' if words[0] in ('S', 'SS') else 'B'
             quantity = words[1].replace(",", "")
             ticker = words[2].split('.')[0].upper()
@@ -203,65 +178,55 @@ def parse_trade_instructions_adjusted(text):
 
     return table1, table2
 
-data_hoje = datetime.now().strftime('%d-%m-%Y')
 
-def processar_dados_cash(dado, data_hoje):
-    if not dado.strip():
+data_hoje = datetime.now().strftime('%Y-%m-%d')
+
+def processar_dados_cash(dado):
+    if not dado.strip():  # Verifica se o dado está vazio ou contém apenas espaços
         return []
     
     linhas = []
     for linha in dado.strip().split('\n'):
-        try:
-            operacao, produto, resto = linha.split(' ', 2)
-            qtde, preco = resto.split(' @ ')
-            qtde = qtde.replace('.', '')
-            preco = preco.replace('.', '').replace(',', '.')
-            qtde = float(qtde) * (-1 if operacao == 'V' else 1)
-            linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
-        except ValueError:
-            st.error(f"Erro ao processar a linha: {linha}. Verifique o formato dos dados.")
-            continue
+        operacao, produto, resto = linha.split(' ', 2)
+        qtde, preco = resto.split(' @ ')
+        qtde = qtde.replace('.', '')  # Removendo pontos usados para milhares
+        preco = preco.replace('.', '').replace(',', '.')  # Convertendo formato BR para formato numérico aceitável em Python
+        qtde = float(qtde) * (-1 if operacao == 'V' else 1)
+        linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
     return linhas
-
-def processar_dados_futuros(dado, data_hoje):
+def processar_dados_futuros(dado):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')
-        if len(partes) == 4:
+        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
+        if len(partes) == 4:  # Verifica se a linha tem 4 partes
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')
-            preco = preco.replace(',', '')
+            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
+            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
-            # Determinar o Book baseado no nome do produto
-            book = "Hedge" if produto.startswith(("WDO", "DOL")) else "Direcional_Indice"
-            linhas.append([data_hoje, produto, qtde, float(preco), book, "", trader, "LIQUIDEZ", "ITAU"])
+            linhas.append([data_hoje, produto, qtde, float(preco), "Bloomberg", "", trader, "LIQUIDEZ", "ITAU"])
     return linhas
-
-def processar_dados_inoa_cash(dado, data_hoje):
+def processar_dados_inoa_cash(dado):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')
-        if len(partes) == 4:
+        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
+        if len(partes) == 4:  # Verifica se a linha tem 4 partes
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')
-            preco = preco.replace(',', '')
+            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
+            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
     return linhas
-
-
-def processar_dados_futuros_murilo(dado, data_hoje):
+def processar_dados_futuros_murilo(dado):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')
-        if len(partes) == 4:
+        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
+        if len(partes) == 4:  # Verifica se a linha tem 4 partes
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')
-            preco = preco.replace(',', '')
+            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
+            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append(["", data_hoje, produto, "Murilo Ortiz", "LIQUIDEZ", "ITAU", float(preco), qtde])
     return linhas
-
     
 def process_file(uploaded_file):
     df = pd.read_excel(uploaded_file, header=1)
@@ -278,40 +243,30 @@ def process_file(uploaded_file):
     else:
         grouped_df = df.groupby(['Operation', 'Ticker Bloomberg']).agg({'Qtde': 'sum'}).reset_index()
     return grouped_df
-
-
 # Função para comparar DataFrame com dados colados
 def compare_dataframes(df1, pasted_data):
     TESTDATA = StringIO(pasted_data)
     df2 = pd.read_csv(TESTDATA, sep="\t", header=None)
     df2.columns = ['Operation', 'Ticker Bloomberg', 'Qtde', 'Price']
     return df1.equals(df2)
-
-
 def call_bsm(S0, K, r, T, Otype, sig):
     # Certifique-se de que todos os valores estão como Decimal
     S0, K, r, T, sig = map(Decimal, [S0, K, r, T, sig])
-
     d1 = (Decimal(math.log(S0 / K)) + (r + Decimal(0.5) * sig ** 2) * T) / (sig * Decimal(math.sqrt(T)))
     d2 = d1 - sig * Decimal(math.sqrt(T))
-
     if Otype == "Call":
         price = S0 * Decimal(norm.cdf(float(d1))) - K * Decimal(math.exp(-float(r * T))) * Decimal(norm.cdf(float(d2)))
     else:
         price = K * Decimal(math.exp(-float(r * T))) * Decimal(norm.cdf(float(-d2))) - S0 * Decimal(norm.cdf(float(-d1)))
-
     return price
-
 def vega(S0, K, r, T, sig):
     # Ajuste similar para a função vega
     S0, K, r, T, sig = map(Decimal, [S0, K, r, T, sig])
     d1 = (Decimal(math.log(S0 / K)) + (r + Decimal(0.5) * sig ** 2) * T) / (sig * Decimal(math.sqrt(T)))
     return S0 * Decimal(norm.pdf(float(d1))) * Decimal(math.sqrt(T))
-
 def imp_vol(S0, K, T, r, market, Otype):
     e = Decimal('1e-15')
     x0 = Decimal('0.2')  # Um palpite inicial para sigma
-
     def newtons_method(S0, K, T, r, market, Otype, x0, e):
         delta = call_bsm(S0, K, r, T, Otype, x0) - market
         while abs(delta) > e:
@@ -319,11 +274,8 @@ def imp_vol(S0, K, T, r, market, Otype):
             x0 = x0 - adjustment
             delta = call_bsm(S0, K, r, T, Otype, x0) - market
         return x0
-
     sig = newtons_method(S0, K, T, r, market, Otype, x0, e)
     return sig * 100
-
-
 def calcular_gregas_bs(preco_subjacente, preco_exercicio, tempo, taxa_juros, dividendos, volatilidade, tipo_opcao):
     d1 = (m.log(preco_subjacente / preco_exercicio) + (taxa_juros - dividendos + 0.5 * volatilidade ** 2) * tempo) / (
             volatilidade * m.sqrt(tempo))
@@ -338,16 +290,12 @@ def calcular_gregas_bs(preco_subjacente, preco_exercicio, tempo, taxa_juros, div
         d2) * 0.01 if tipo_opcao == 'Call' else -preco_exercicio * tempo * m.exp(-taxa_juros * tempo) * norm.cdf(
         -d2) * 0.01
     return {'Delta': delta, 'Gamma': gamma, 'Vega': vega, 'Theta': theta, 'Rho': rho}
-
-
 def calcular_volatilidade_historica(ticker, periodo):
     ativo = yf.Ticker(ticker)
     dados = ativo.history(period=periodo)
     retornos_log = np.log(dados['Close'] / dados['Close'].shift(1))
     volatilidade = retornos_log.std() * np.sqrt(252)  # Anualizando
     return volatilidade
-
-
 def ParisianPricer(S, K, r, T, sigma, barrier, barrier_duration, runs):
     dt = T / 365.0
     sqrt_dt = np.sqrt(dt)
@@ -366,8 +314,6 @@ def ParisianPricer(S, K, r, T, sigma, barrier, barrier_duration, runs):
     discount_factor = np.exp(-r * T)
     price = discount_factor * np.mean(option_payoffs)
     return price
-
-
 def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio, tempo, taxa_juros, dividendos,
                    volatilidade, num_simulacoes=10000, num_periodos=100):
     try:
@@ -413,7 +359,6 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
                     st.json(gregas_compra)
                     st.write('Gregas da Opção de Venda:')
                     st.json(gregas_venda)
-
         elif tipo_opcao == 'Americana':
             if metodo_solucao == 'Monte Carlo':
                 preco_opcao_compra = np.mean(np.maximum(S[:, -1] - preco_exercicio, 0) * discount_factor)
@@ -430,8 +375,6 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
                                                                 volatilidade, num_steps)
     except Exception as e:
         st.error(f"An error occurred: {e}")
-
-
 # Estrutura de navegação
 st.sidebar.title("Menu de Navegação")
 opcao = st.sidebar.radio(
@@ -442,8 +385,6 @@ if opcao == 'Home':
     st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
     st.title("Bem-vindo ao Dashboard de Opções")
     st.markdown("Escolha uma das opções no menu lateral para começar.")
-
-
 elif opcao == 'Pegar Volatilidade Histórica':
     ticker = st.text_input('Ticker do Ativo:', value='PETR4.SA')
     st.text(
@@ -452,7 +393,6 @@ elif opcao == 'Pegar Volatilidade Histórica':
     if st.button('Buscar Volatilidade Histórica'):
         volatilidade = calcular_volatilidade_historica(ticker, periodo)
         st.success(f'Volatilidade Histórica para {ticker} no período de {periodo}: {volatilidade * 100:.2f}%')
-
 elif opcao == 'Calcular Preço de Opções':
     # Seleção do tipo de opção
     tipo_opcao = st.selectbox('Tipo de Opção', ['Europeia', 'Americana', 'Parisian'])
@@ -461,37 +401,29 @@ elif opcao == 'Calcular Preço de Opções':
         'Americana': ['Monte Carlo'],
         'Parisian': ['Parisian']
     }.get(tipo_opcao, ['Monte Carlo']))  # Mapeia tipos de opções com seus métodos correspondentes
-
     preco_subjacente = st.number_input('Preço do Ativo Subjacente', value=25.0)
     preco_exercicio = st.number_input('Preço de Exercício', value=30.0)
     data_vencimento = st.date_input('Data de Vencimento')
     taxa_juros = st.number_input('Taxa de Juros Livre de Risco (%)', value=0.0) / 100
     dividendos = st.number_input('Dividendos (%)', value=0.0) / 100
     volatilidade = st.number_input('Volatilidade (%)', value=20.0) / 100
-
     # Configuração baseada no método de solução
     if metodo_solucao in ['Black-Scholes', 'Monte Carlo']:
         num_simulacoes = st.number_input("Número de simulações:", value=10000)
         num_periodos =  st.number_input("Número de períodos:", value=100)
-
     elif metodo_solucao == 'Parisian':
         barrier = st.number_input('Barreira', value=125.0)
         barrier_duration = st.number_input('Duração da Barreira (dias)', value=5.0)
         runs = st.number_input('Simulações Monte Carlo', value=100000, step=1000)
-
     # Calculo do tempo até vencimento
     hoje = pd.Timestamp('today').floor('D')
     vencimento = pd.Timestamp(data_vencimento)
     dias_corridos = (vencimento - hoje).days
     tempo = dias_corridos / 360
-
-
     if dias_corridos == 0:
         st.error('A data de vencimento não pode ser hoje. Por favor, selecione uma data futura.')
-
     else:
         tipo_opcao_escolhida = st.radio("Escolha o tipo da Opção", ('Call', 'Put'))
-
         if st.button('Calcular Preço das Opções e Gregas'):
             if metodo_solucao == 'Parisian':
                 price = ParisianPricer(preco_subjacente, preco_exercicio, taxa_juros, tempo, volatilidade, barrier, barrier_duration / 365, runs)
@@ -504,7 +436,6 @@ elif opcao == 'Calcular Preço de Opções':
                                                    volatilidade, 'Call')
                 gregas_venda = calcular_gregas_bs(preco_subjacente, preco_exercicio, tempo, taxa_juros, dividendos,
                                                   volatilidade, 'Put')
-
                 if tipo_opcao_escolhida == 'Call':
                     st.success(f'Preço da Opção de Compra: {preco_opcao_compra:.4f}')
                     st.write('Gregas da Opção de Compra:')
@@ -513,8 +444,6 @@ elif opcao == 'Calcular Preço de Opções':
                     st.success(f'Preço da Opção de Venda: {preco_opcao_venda:.4f}')
                     st.write('Gregas da Opção de Venda:')
                     st.json(gregas_venda)
-
-
 elif opcao == 'Calcular Volatilidade Implícita':
     Otype = st.radio("Tipo de Opção", ['Call', 'Put'])
     market_price = st.number_input('Preço de Mercado da Opção', value=5.0)
@@ -537,7 +466,6 @@ elif opcao == 'Calcular Volatilidade Implícita':
                 st.error("Não foi possível calcular a volatilidade implícita. Verifique os inputs.")
         except Exception as e:
             st.error(f"Erro ao calcular a volatilidade implícita: {e}")
-
 elif opcao == 'Pegar Open Interest':
     ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
     if ticker_symbol:
@@ -553,26 +481,22 @@ elif opcao == 'Pegar Open Interest':
                         opts = ticker.option_chain(expiry)
                         calls = opts.calls[['strike', 'openInterest']]
                         puts = opts.puts[['strike', 'openInterest']]
-
                         # Criação do PDF para cada data de vencimento selecionada
                         pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
                         with PdfPages(pdf_path) as pdf:
                             fig, axes = plt.subplots(1, 3, figsize=(30, 8))
-
                             # Horizontal bar plot for Calls
                             calls_oi_grouped = calls.groupby('strike')['openInterest'].sum().reset_index()
                             axes[0].barh(calls_oi_grouped['strike'], calls_oi_grouped['openInterest'], color='skyblue')
                             axes[0].set_title(f'Calls Open Interest for {expiry}')
                             axes[0].set_ylabel('Strike Price')
                             axes[0].set_xlabel('Open Interest')
-
                             # Horizontal bar plot for Puts
                             puts_oi_grouped = puts.groupby('strike')['openInterest'].sum().reset_index()
                             axes[1].barh(puts_oi_grouped['strike'], puts_oi_grouped['openInterest'], color='salmon')
                             axes[1].set_title(f'Puts Open Interest for {expiry}')
                             axes[1].set_ylabel('Strike Price')
                             axes[1].set_xlabel('Open Interest')
-
                             # Horizontal bar plot for Differences
                             combined = pd.merge(calls_oi_grouped, puts_oi_grouped, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
                             combined['difference'] = combined['openInterest_call'] - combined['openInterest_put']
@@ -580,10 +504,8 @@ elif opcao == 'Pegar Open Interest':
                             axes[2].set_title(f'Difference (Calls - Puts) for {expiry}')
                             axes[2].set_ylabel('Strike Price')
                             axes[2].set_xlabel('Difference in Open Interest')
-
                             pdf.savefig(fig)
                             plt.close(fig)
-
                         # Providing a download button for each PDF
                         with open(pdf_path, "rb") as f:
                             st.download_button(label=f"Download PDF for {expiry}",
@@ -594,7 +516,6 @@ elif opcao == 'Pegar Open Interest':
             st.error("Não há datas de vencimento disponíveis para este ticker.")
     else:
         st.warning("Por favor, insira um ticker válido.")
-
     def custom_css():
         st.markdown(
             """
@@ -616,10 +537,8 @@ elif opcao == 'Pegar Open Interest':
     
     
 elif opcao == 'Spreads Arb':
-
     # Título da página
     st.title('Dashboard de Arbitragem por Cliente')
-
     # Inicialização do DataFrame se não existir no state
     if 'data' not in st.session_state:
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
@@ -654,8 +573,6 @@ elif opcao == 'Spreads Arb':
     if st.button('Limpar Dados'):
         st.session_state['data'] = pd.DataFrame(columns=['Cliente', 'Tipo', 'Ativo', 'BPS', 'Size'])
         st.experimental_rerun()
-
-
 elif opcao == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
@@ -670,14 +587,12 @@ elif opcao == 'Gerar Excel':
     destinatario = st.text_input("Email do Destinatário:", value=default_destinatario)
     assunto = st.text_input("Assunto do Email:", value=default_assunto)
     corpo_email = st.text_area("Corpo do Email:", value=default_corpo_email)
-
     if st.button('Gerar Excel'):
         if data:
             try:
                 data_io = StringIO(data)
                 df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)
                 df.to_excel(nome_arquivo, index=False, header=False)
-
                 with open(nome_arquivo, "rb") as f:
                     st.download_button("Baixar Excel", f.read(), file_name=nome_arquivo)
                 st.success("Excel gerado com sucesso!")
@@ -697,8 +612,6 @@ elif opcao == 'Gerar Excel':
                         st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
-
-
 elif opcao == 'Leitor Recap Kap':
     st.title('Leitor ADRxORD Kapitalo')
     uploaded_file = st.file_uploader("Choose a file")
@@ -706,7 +619,6 @@ elif opcao == 'Leitor Recap Kap':
         processed_data = process_file(uploaded_file)
         st.write('Processed Data')
         st.dataframe(processed_data)
-
     
     # Função para processar os dados de operações inseridos pelo usuário
 def processar_dados(dados):
@@ -723,8 +635,6 @@ def processar_dados(dados):
                 operacoes[ticker] = {"C": [], "V": []}
             operacoes[ticker][operacao].append((linha, quantidade, valor, linha_id))
     return operacoes
-
-
 # Atualize esta função conforme necessário para o seu uso
 def mostrar_operacoes(operacoes, ticker_escolhido, px_ref):
     if ticker_escolhido in operacoes:
@@ -744,19 +654,13 @@ def mostrar_operacoes(operacoes, ticker_escolhido, px_ref):
                     st.session_state['selecionados'].add(unique_key)
                 else:
                     st.session_state['selecionados'].discard(unique_key)
-
     pass
-
-
 if 'dados_operacoes' not in st.session_state:
     st.session_state['dados_operacoes'] = []
-
 if 'px_ref_por_ativo' not in st.session_state:
     st.session_state['px_ref_por_ativo'] = {}
-
 if 'limpar_adicionais' not in st.session_state:
     st.session_state['limpar_adicionais'] = False
-
 elif opcao == 'Niveis Kapitalo':
     if 'dados_operacoes' not in st.session_state:
         st.session_state['dados_operacoes'] = []
@@ -789,95 +693,71 @@ elif opcao == 'Niveis Kapitalo':
         if ticker_escolhido:
             px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
             mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
-
-if "abas_futuros" not in st.session_state:
-    st.session_state.abas_futuros = {}
-    
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
-    if st.button("Adicionar uma nova aba para Futuros"):
-        nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
-        st.session_state.abas_futuros.append(nova_aba)
-        st.session_state.dados_futuros[nova_aba] = ""
-    
-    # Formulário principal
     with st.form("input_form"):
         trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
         nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
-        dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
-        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
-        
-        # Exibir caixas de texto para cada aba de futuros
-        for aba in st.session_state.abas_futuros:
-            st.session_state.dados_futuros[aba] = st.text_area(f"Cole os dados para {aba}:", height=150, key=aba)
-        
+        dados_cash = st.text_area("Cole os dados de CASH aqui:            ex: V PETR4 159.362 @ 40,382615 ", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:   S PETR3 639,342 41.779994             ", height=150)
+        dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B WDOK24 6 5,241.00000000", height=150)
         planilha_murilo = st.checkbox("Planilha do Murilo?")
         submitted = st.form_submit_button("Processar e Baixar Excel")
-    
     if submitted:
-        data_hoje = datetime.now().strftime('%d/%m/%Y')
-        
-        # Processar dados CASH
-        linhas_cash = processar_dados_cash(dados_cash, data_hoje)
-        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa, data_hoje)
-        
-        # Consolidando todos os dados de CASH
+        linhas_cash = processar_dados_cash(dados_cash)
+        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
+        if planilha_murilo:
+            linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
+        else:
+            linhas_futuros = processar_dados_futuros(dados_futuros)
+            df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
+    
+        # Consolidando todos os dados
         linhas_cash_total = linhas_cash + linhas_cash_inoa
         df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
-        
-        # Processar dados FUTUROS
-        futuros_dfs = {}
-        for nome_aba, dados in st.session_state.dados_futuros.items():
-            linhas_futuros = processar_dados_futuros(dados, data_hoje)
-            futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
-
-        if planilha_murilo:
-            dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
-            linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
-            df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
-        
-        # Gerar Excel
+    # Gerar Excel
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_cash.to_excel(writer, sheet_name='CASH', index=False)
-            
-            # Adicionando abas para futuros
-            for nome_aba, df_futuros in futuros_dfs.items():
-                df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
-            
-            if planilha_murilo:
-                df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
-
-        
-        output.seek(0)
+            df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
+        output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
+    
         today = datetime.now().strftime('%m_%d_%y')
         nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
-        
+    
         st.download_button(label="Baixar Dados em Excel",
                            data=output,
                            file_name=nome_do_arquivo_final,
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 elif opcao == 'Basket Fidessa':
     st.title("Basket Fidessa")
-    
+
+    cliente = st.text_input("Nome do Cliente")
     cliente = st.text_input("Nome do Cliente",)
     trade_text = st.text_area("Enter Trade Instructions:", height=300, value="S 506 ABBV\nS 500 AMZN\n...")
-    
+
+    format_type = st.selectbox("Select the format of the trade instructions:",
+                               ["Side, Quantity, Ticker", "Side, Ticker, Quantity"])
+    language = st.selectbox("Select the language of the trade instructions:",
+                            ["English", "Portuguese"])
+
     if st.button("Generate Baskets"):
+        table1, table2 = parse_trade_instructions_adjusted(trade_text, format_type, language)
+
         table1, table2 = parse_trade_instructions_adjusted(trade_text)
         
         df_table1 = pd.DataFrame(table1, columns=['Type', 'Ticker', 'Quantity'])
         df_table2 = pd.DataFrame(table2, columns=['Type', 'Ticker', 'Quantity'])
-    
+
         today = datetime.now().strftime('%m-%d-%Y')
-    
+
         # Add zero column
         df_table1['Zero'] = 0
         df_table2['Zero'] = 0
         quantities_sum_table1 = sum_quantities_by_operation(df_table1)
-    
+
         # Saving dataframes to CSV in memory
         output1 = BytesIO()
         df_table1.to_csv(output1, index=False)
@@ -889,10 +769,20 @@ elif opcao == 'Basket Fidessa':
     
         file_name1 = f"{cliente}_BASKET_{today}_table1.csv"
         file_name2 = f"{cliente}_BASKET_{today}_table2.csv"
-    
+
         st.download_button("Download Table 1", data=output1, file_name=file_name1, mime='text/csv')
-        
-    
+        st.download_button("Download Table 2", data=output2, file_name=file_name2, mime='text/csv')
+
+        # Opcional: Exibir as tabelas
+        st.write("Table 1:")
+        st.dataframe(df_table1)
+        st.write("Table 2:")
+        st.dataframe(df_table2)
+
+
+        # Optional: Display the tables in Streamlit
+              # Display quantities sum
+
     # Optional: Display the tables in Streamlit
           # Display quantities sum
         st.write("Quantities Sum by side: ")
@@ -900,7 +790,6 @@ elif opcao == 'Basket Fidessa':
 
 elif opcao == 'Notional to shares':
     st.title("Notional to Shares Calculator")
-
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
     ticker = st.text_input("Enter the stock ticker (e.g., AAPL):")
     notional_str = st.text_input("Enter the notional amount in dollars (e.g., 100k, 2m):")
@@ -917,7 +806,6 @@ elif opcao == 'Notional to shares':
                     st.write(f"Number of Shares: {formatted_shares}")
         except ValueError as e:
             st.error(str(e))
-
 elif opcao == "Update com participação":
     st.title("Market Participation Tracker")
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
@@ -931,12 +819,9 @@ elif opcao == "Update com participação":
             return price, volume
         else:
             return None, None
-
     
     if 'orders' not in st.session_state:
         st.session_state['orders'] = pd.DataFrame(columns=['Ticker', 'Shares', 'Initial Volume', 'Initial Participation'])
-
-
     with st.expander("Add New Order"):
         ticker = st.text_input("Enter the stock ticker (e.g., AAPL):", key='new_ticker')
         shares = st.number_input("Enter number of shares:", key='new_shares', min_value=0)
@@ -967,13 +852,10 @@ elif opcao == "Update com participação":
                 st.success(f"Updated participation for {order['Ticker']}.")
     
     st.dataframe(st.session_state['orders'])
-
 if 'options_df' not in st.session_state:
     st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
-
 elif opcao == "XML Opção":
     st.title("Options Data Input and XML Generator")
-
     with st.expander("Input Options Form"):
         with st.form("options_form"):
             cols = st.columns(4)
@@ -1005,29 +887,23 @@ elif opcao == "XML Opção":
             "Commission": commission, "XML": xml_result
         }
         st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
-
     with st.expander("Options Dashboard"):
         if not st.session_state['options_df'].empty:
             st.dataframe(st.session_state['options_df'], height=300)
             st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
-
     with st.expander("Consolidated Dashboard"):
         if not st.session_state['options_df'].empty:
             consolidated_data = calculate_weighted_average(st.session_state['options_df'])
             formatted_data = consolidated_data.style.format({'Average_Price': '{:.6f}'})  # Formatar para 6 casas decimais
             st.write("Consolidated Data with Average Prices:")
             st.dataframe(formatted_data)
-
     if st.button("Clear Data"):
         st.session_state['options_df'] = pd.DataFrame(columns=[
             "Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "Commission", "XML"
         ])
         st.rerun()
-
-
 elif opcao == 'Consolidado opções':
     st.title("Options Data Analysis")
-
 # Aba para entrada de dados
     with st.expander("Paste Data Here"):
         raw_data = st.text_area("Paste data in the following format: \nSide\tSymbol\tQuantity\tExecution Price\tStrike\tMaturity\tCALL / PUT\tCommission", height=300)
@@ -1038,14 +914,10 @@ elif opcao == 'Consolidado opções':
         result_df = calculate_average_price(df)
         st.write("Aggregated and Averaged Data:")
         st.dataframe(result_df)
-
-
-
 elif opcao == 'Comissions':
     st.title("Comissions Off Shore")
     start_date = st.date_input('Data de Início', datetime(2023, 7, 1))
     end_date = st.date_input('Data de Término', datetime(2024, 1, 1))
-
     if st.button('Processar Dados'):
         consolidated_df = process_data(start_date, end_date)
         if not consolidated_df.empty:
@@ -1056,7 +928,6 @@ elif opcao == 'Comissions':
             soma_shares = (consolidated_df.iloc[:, 5]).sum()
             st.write(f"A comissão consolidada para o período é de: {soma_produto:.2f} dólares")
             st.write(f"Total de shares é de: {soma_shares:.2f}")
-
             # Opção de download do DataFrame como Excel
             towrite = StringIO()
             consolidated_df.to_excel(towrite, index=False, engine='xlsxwriter')
@@ -1067,7 +938,6 @@ elif opcao == 'Comissions':
             
 elif opcao == 'Estrutura a Termo de Vol':
     st.title('Projeção de Volatilidade com GARCH')
-
     # Inputs do usuário
     st.sidebar.header('Parâmetros')
     asset = st.sidebar.text_input('Ativo', value='^BVSP')
@@ -1079,22 +949,18 @@ elif opcao == 'Estrutura a Termo de Vol':
     data = download_data(asset, start_date, end_date)
     if data is not None:
         returns = 100 * data['Adj Close'].pct_change().dropna()
-
         # Ajustar um modelo GARCH(1,1)
         model = arch_model(returns, vol='Garch', p=1, q=1)
         model_fit = model.fit(disp='off')
         st.write(model_fit.summary())
-
         # Prever a volatilidade futura
         forecasts = model_fit.forecast(horizon=forecast_horizon)
         vol_forecast_daily = np.sqrt(forecasts.variance.values[-1, :])
         vol_forecast_annual = vol_forecast_daily * np.sqrt(252)
-
         # Estrutura a termo de volatilidade
         dates = pd.date_range(start=returns.index[-1], periods=forecast_horizon, freq='B')
         vol_df = pd.DataFrame({'Date': dates, 'Volatility': vol_forecast_annual})
         vol_df.set_index('Date', inplace=True)
-
         # Plotar a estrutura a termo de volatilidade anualizada
         plt.figure(figsize=(10, 6))
         plt.plot(vol_df.index, vol_df['Volatility'], marker='o')
@@ -1103,7 +969,6 @@ elif opcao == 'Estrutura a Termo de Vol':
         plt.ylabel('Volatilidade Anualizada (%)')
         plt.grid(True)
         st.pyplot(plt)
-
         # Salvar a estrutura a termo de volatilidade em um arquivo CSV
         csv = vol_df.to_csv().encode('utf-8')
         st.download_button(
@@ -1114,11 +979,4 @@ elif opcao == 'Estrutura a Termo de Vol':
         )
     
     
-
-
-
                                                        
-                
-                
-           
-      
