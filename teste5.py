@@ -794,7 +794,7 @@ elif opcao == 'Niveis Kapitalo':
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
-     if st.button("Adicionar uma nova aba para Futuros"):
+    if st.button("Adicionar uma nova aba para Futuros"):
             nova_aba_key = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
             st.session_state.abas_futuros[nova_aba_key] = {"nome": "", "dados": ""}
         
