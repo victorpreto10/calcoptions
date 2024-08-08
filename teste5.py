@@ -34,6 +34,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time  
 
+if "abas_futuros" not in st.session_state:
+    st.session_state.abas_futuros = {}  # Certifique-se de que abas_futuros é um dicionário
+if "dados_futuros" not in st.session_state:
+    st.session_state.dados_futuros = {}
+
 
 def download_data(asset, start, end, max_retries=5):
     for i in range(max_retries):
@@ -197,52 +202,53 @@ def parse_trade_instructions_adjusted(text):
 
 data_hoje = datetime.now().strftime('%Y-%m-%d')
 
-def processar_dados_cash(dado):
-    if not dado.strip():  # Verifica se o dado está vazio ou contém apenas espaços
-        return []
-    
+def processar_dados_cash(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
-        operacao, produto, resto = linha.split(' ', 2)
-        qtde, preco = resto.split(' @ ')
-        qtde = qtde.replace('.', '')  # Removendo pontos usados para milhares
-        preco = preco.replace('.', '').replace(',', '.')  # Convertendo formato BR para formato numérico aceitável em Python
-        qtde = float(qtde) * (-1 if operacao == 'V' else 1)
-        linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+        try:
+            operacao, produto, qtde, preco = linha.split()
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '').replace('.', '')
+            qtde = float(qtde) * (-1 if operacao == 'V' else 1)
+            linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
+        except ValueError:
+            st.error(f"Erro ao processar a linha: {linha}. Verifique o formato dos dados.")
+            continue
     return linhas
 
-def processar_dados_futuros(dado):
+def processar_dados_futuros(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
-        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+        partes = linha.split('\t')
+        if len(partes) == 4:
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
-            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '')
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
-            linhas.append([data_hoje, produto, qtde, float(preco), "Bloomberg", "", trader, "LIQUIDEZ", "ITAU"])
+            book = "Hedge" if produto.startswith(("WDO", "DOL")) else "Direcional_Indice"
+            linhas.append([data_hoje, produto, qtde, float(preco), book, "", trader, "LIQUIDEZ", "ITAU"])
     return linhas
 
-def processar_dados_inoa_cash(dado):
+def processar_dados_inoa_cash(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
-        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+        partes = linha.split('\t')
+        if len(partes) == 4:
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
-            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '')
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
     return linhas
 
-def processar_dados_futuros_murilo(dado):
+def processar_dados_futuros_murilo(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
-        partes = linha.split('\t')  # Modificado para usar split por tabulação, ajuste conforme necessário
-        if len(partes) == 4:  # Verifica se a linha tem 4 partes
+        partes = linha.split('\t')
+        if len(partes) == 4:
             operacao, produto, qtde, preco = partes
-            qtde = qtde.replace(',', '')  # Removendo vírgulas usadas para milhares, se houver
-            preco = preco.replace(',', '')  # Garantindo que não haja vírgulas
+            qtde = qtde.replace(',', '')
+            preco = preco.replace(',', '')
             qtde = float(qtde) * (-1 if operacao == 'S' else 1)
             linhas.append(["", data_hoje, produto, "Murilo Ortiz", "LIQUIDEZ", "ITAU", float(preco), qtde])
     return linhas
@@ -778,44 +784,68 @@ elif opcao == 'Niveis Kapitalo':
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
+    if st.button("Adicionar uma nova aba para Futuros"):
+        nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
+        st.session_state.abas_futuros.append(nova_aba)
+        st.session_state.dados_futuros[nova_aba] = ""
+    
+    # Formulário principal
     with st.form("input_form"):
         trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
         nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
-        dados_cash = st.text_area("Cole os dados de CASH aqui:            ex: V PETR4 159.362 @ 40,382615 ", height=150)
-        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui:                ex:   S PETR3 639,342 41.779994             ", height=150)
-        dados_futuros = st.text_area("Cole os dados de FUTUROS aqui:                 ex: B WDOK24 6 5,241.00000000", height=150)
+        dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
+        dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
+        
+        # Exibir caixas de texto para cada aba de futuros
+        for aba in st.session_state.abas_futuros:
+            st.session_state.dados_futuros[aba] = st.text_area(f"Cole os dados para {aba}:", height=150, key=aba)
+        
         planilha_murilo = st.checkbox("Planilha do Murilo?")
         submitted = st.form_submit_button("Processar e Baixar Excel")
-
-    if submitted:
-        linhas_cash = processar_dados_cash(dados_cash)
-        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa)
-
-        if planilha_murilo:
-            linhas_futuros = processar_dados_futuros_murilo(dados_futuros)
-            df_futuros = pd.DataFrame(linhas_futuros, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
-        else:
-            linhas_futuros = processar_dados_futuros(dados_futuros)
-            df_futuros = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
     
-        # Consolidando todos os dados
+    if submitted:
+        data_hoje = datetime.now().strftime('%d/%m/%Y')
+        
+        # Processar dados CASH
+        linhas_cash = processar_dados_cash(dados_cash, data_hoje)
+        linhas_cash_inoa = processar_dados_inoa_cash(dados_cash_inoa, data_hoje)
+        
+        # Consolidando todos os dados de CASH
         linhas_cash_total = linhas_cash + linhas_cash_inoa
         df_cash = pd.DataFrame(linhas_cash_total, columns=["Data", "Produto", "Qtde", "Preço", "Dealer"])
+        
+        # Processar dados FUTUROS
+        futuros_dfs = {}
+        for nome_aba, dados in st.session_state.dados_futuros.items():
+            linhas_futuros = processar_dados_futuros(dados, data_hoje)
+            futuros_dfs[nome_aba] = pd.DataFrame(linhas_futuros, columns=["Data", "Produto", "Qtde", "Preço", "Book", "Fundo", "Trader", "Dealer", "Settle Dealer"])
 
-    # Gerar Excel
+        if planilha_murilo:
+            dados_murilo = st.text_area("Cole os dados do Murilo aqui:", height=150)
+            linhas_futuros_murilo = processar_dados_futuros_murilo(dados_murilo, data_hoje)
+            df_futuros_murilo = pd.DataFrame(linhas_futuros_murilo, columns=["strategy", "date", "future", "trader", "dealer", "settle_dealer", "rate", "amount"])
+        
+        # Gerar Excel
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_cash.to_excel(writer, sheet_name='CASH', index=False)
-            df_futuros.to_excel(writer, sheet_name='FUTUROS', index=False)
-        output.seek(0)  # Importante: resetar a posição de leitura no objeto de memória
-    
+            
+            # Adicionando abas para futuros
+            for nome_aba, df_futuros in futuros_dfs.items():
+                df_futuros.to_excel(writer, sheet_name=nome_aba, index=False)
+            
+            if planilha_murilo:
+                df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
+
+        
+        output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
         nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
-    
+        
         st.download_button(label="Baixar Dados em Excel",
                            data=output,
                            file_name=nome_do_arquivo_final,
-                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 elif opcao == 'Basket Fidessa':
