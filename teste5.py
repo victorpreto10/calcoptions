@@ -779,14 +779,18 @@ elif opcao == 'Niveis Kapitalo':
         if ticker_escolhido:
             px_ref = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido}")
             mostrar_operacoes(operacoes_processadas, ticker_escolhido, px_ref)
-
+            
+if "abas_futuros" not in st.session_state:
+    st.session_state.abas_futuros = {}  # Inicializa como um dicionário
+if "dados_futuros" not in st.session_state:
+    st.session_state.dados_futuros = {}
 
 elif opcao == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
     if st.button("Adicionar uma nova aba para Futuros"):
         nova_aba = f"Futuro_{len(st.session_state.abas_futuros) + 1}"
-        st.session_state.abas_futuros.append(nova_aba)
+        st.session_state.abas_futuros[nova_aba] = ""  # Adiciona ao dicionário
         st.session_state.dados_futuros[nova_aba] = ""
     
     # Formulário principal
@@ -837,7 +841,6 @@ elif opcao == 'Planilha SPX':
             if planilha_murilo:
                 df_futuros_murilo.to_excel(writer, sheet_name='Murilo_Futuros', index=False)
 
-        
         output.seek(0)
         today = datetime.now().strftime('%m_%d_%y')
         nome_do_arquivo_final = f"{nome_arquivo}_{today}.xlsx"
