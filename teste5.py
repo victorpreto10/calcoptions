@@ -380,28 +380,37 @@ if "abas_futuros" not in st.session_state:
     st.session_state.abas_futuros = {}  # Certifique-se de que abas_futuros é um dicionário
 if "dados_futuros" not in st.session_state:
     st.session_state.dados_futuros = {}
+if "selected_category" not in st.session_state:
+    st.session_state.selected_category = None
 
 # Estrutura de navegação
 st.sidebar.title("Menu de Navegação")
 
 st.sidebar.subheader("📊 Arbitragem")
-arb_opcoes = st.sidebar.radio(
-    "Escolha uma opção de Arbitragem:",
-    ('Spreads Arb', 'Estrutura a Termo de Vol', 'Niveis Kapitalo', 'Basket Fidessa')
-)
+category = st.sidebar.selectbox("Categoria:", ["Nenhuma", "Arbitragem", "Opções", "Confirmações"])
 
-st.sidebar.subheader("⚙️ Opções")
-opcao_opcoes = st.sidebar.radio(
-    "Escolha uma opção de Opções:",
-    ('XML Opção', 'Consolidado opções', 'Notional to shares', 'Planilha SPX', 'Pegar Volatilidade Histórica', 'Pegar Open Interest', 'Calcular Preço de Opções', 'Calcular Volatilidade Implícita')
-)
+st.session_state.selected_category = category
 
-st.sidebar.subheader("🔍 Confirmações")
-confirmacao_opcoes = st.sidebar.radio(
-    "Escolha uma opção de Confirmações:",
-    ('Update com participação', 'Leitor Recap Kap', 'Gerar Excel', 'Comissions')
-)
+if st.session_state.selected_category == "Arbitragem":
+    st.sidebar.subheader("Escolha uma opção de Arbitragem")
+    arb_opcoes = st.sidebar.radio(
+        "Opções:",
+        ('Spreads Arb', 'Estrutura a Termo de Vol', 'Niveis Kapitalo', 'Basket Fidessa')
+    )
 
+elif st.session_state.selected_category == "Opções":
+    st.sidebar.subheader("Escolha uma opção de Opções")
+    opcao_opcoes = st.sidebar.radio(
+        "Opções:",
+        ('XML Opção', 'Consolidado opções', 'Notional to shares', 'Planilha SPX', 'Pegar Volatilidade Histórica', 'Pegar Open Interest', 'Calcular Preço de Opções', 'Calcular Volatilidade Implícita')
+    )
+
+elif st.session_state.selected_category == "Confirmações":
+    st.sidebar.subheader("Escolha uma opção de Confirmações")
+    confirmacao_opcoes = st.sidebar.radio(
+        "Opções:",
+        ('Update com participação', 'Leitor Recap Kap', 'Gerar Excel', 'Comissions')
+    )
 # Implementação das funcionalidades
 
 if opcao_opcoes == 'Pegar Volatilidade Histórica':
