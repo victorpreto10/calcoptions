@@ -426,15 +426,25 @@ def calcular_opcao(tipo_opcao, metodo_solucao, preco_subjacente, preco_exercicio
 
 # Estrutura de navegação
 st.sidebar.title("Menu de Navegação")
-opcao = st.sidebar.radio(
-    "Escolha uma opção:",
-    ('Home','Spreads Arb',"XML Opção",'Estrutura a Termo de Vol','Consolidado opções',"Update com participação",'Notional to shares','Niveis Kapitalo','Basket Fidessa', 'Leitor Recap Kap','Planilha SPX','Pegar Volatilidade Histórica','Pegar Open Interest', 'Gerar Excel','Comissions','Calcular Preço de Opções','Calcular Volatilidade Implícita' 
-))
-if opcao == 'Home':
-    st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
-    st.title("Bem-vindo ao Dashboard de Opções")
-    st.markdown("Escolha uma das opções no menu lateral para começar.")
 
+# Separando as opções em categorias
+st.sidebar.subheader("📊 Arbitragem")
+arb_opcoes = st.sidebar.radio(
+    "Escolha uma opção de Arbitragem:",
+    ('Spreads Arb', 'Estrutura a Termo de Vol', 'Niveis Kapitalo', 'Basket Fidessa')
+)
+
+st.sidebar.subheader("⚙️ Opções")
+opcao_opcoes = st.sidebar.radio(
+    "Escolha uma opção de Opções:",
+    ('XML Opção', 'Consolidado opções', 'Notional to shares', 'Planilha SPX', 'Pegar Volatilidade Histórica', 'Pegar Open Interest', 'Calcular Preço de Opções', 'Calcular Volatilidade Implícita')
+)
+
+st.sidebar.subheader("🔍 Confirmações")
+confirmacao_opcoes = st.sidebar.radio(
+    "Escolha uma opção de Confirmações:",
+    ('Update com participação', 'Leitor Recap Kap', 'Gerar Excel', 'Comissions')
+)
 
 elif opcao == 'Pegar Volatilidade Histórica':
     ticker = st.text_input('Ticker do Ativo:', value='PETR4.SA')
