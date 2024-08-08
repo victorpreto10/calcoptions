@@ -621,7 +621,14 @@ elif opcao_opcoes == 'Planilha SPX':
                            file_name=nome_do_arquivo_final,
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-
+elif confirmacao_opcoes == "Leitor Recap Kap":
+    st.title('Leitor ADRxORD Kapitalo')
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        processed_data = process_file(uploaded_file)
+        st.write('Processed Data')
+        st.dataframe(processed_data)
+        
 elif confirmacao_opcoes == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
