@@ -1118,7 +1118,10 @@ elif opcao == 'Estrutura a Termo de Vol':
         )
     
     
-
+else:
+    st.image('trading.jpg', use_column_width=True)  # Coloque o caminho da sua imagem
+    st.title("Bem-vindo ao Dashboard de Opções")
+    st.markdown("Escolha uma das opções no menu lateral para começar.")
 
 
                                                        
