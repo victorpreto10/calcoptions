@@ -629,143 +629,143 @@ elif opcao_opcoes == 'Planilha SPX':
                            data=output,
                            file_name=nome_do_arquivo_final,
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-elif confirmacao_opcoes == "Leitor Recap Kap":
-    st.title('Leitor ADRxORD Kapitalo')
-    uploaded_file = st.file_uploader("Choose a file")
-    if uploaded_file is not None:
-        processed_data = process_file(uploaded_file)
-        st.write('Processed Data')
-        st.dataframe(processed_data)
+elif st.session_state.selected_category == "Confirmações":
+    elif confirmacao_opcoes == "Leitor Recap Kap":
+        st.title('Leitor ADRxORD Kapitalo')
+        uploaded_file = st.file_uploader("Choose a file")
+        if uploaded_file is not None:
+            processed_data = process_file(uploaded_file)
+            st.write('Processed Data')
+            st.dataframe(processed_data)
+            
+    elif confirmacao_opcoes == 'Gerar Excel':
+        st.title("Gerar Excel a partir de Dados Colados")
+        data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
         
-elif confirmacao_opcoes == 'Gerar Excel':
-    st.title("Gerar Excel a partir de Dados Colados")
-    data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
+        today = datetime.now().strftime("%Y%m%d")
+        nome_arquivo = st.text_input("Nome do Arquivo Excel:", f"JP_BASKET{today}.xlsx")
+        
+        default_destinatario = "destinatario@example.com"
+        default_assunto = f"JPM EXCEL {today}"
+        default_corpo_email = ""
+        
+        destinatario = st.text_input("Email do Destinatário:", value=default_destinatario)
+        assunto = st.text_input("Assunto do Email:", value=default_assunto)
+        corpo_email = st.text_area("Corpo do Email:", value=default_corpo_email)
     
-    today = datetime.now().strftime("%Y%m%d")
-    nome_arquivo = st.text_input("Nome do Arquivo Excel:", f"JP_BASKET{today}.xlsx")
+        if st.button('Gerar Excel'):
+            if data:
+                try:
+                    data_io = StringIO(data)
+                    df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)
+                    df.to_excel(nome_arquivo, index=False, header=False)
     
-    default_destinatario = "destinatario@example.com"
-    default_assunto = f"JPM EXCEL {today}"
-    default_corpo_email = ""
-    
-    destinatario = st.text_input("Email do Destinatário:", value=default_destinatario)
-    assunto = st.text_input("Assunto do Email:", value=default_assunto)
-    corpo_email = st.text_area("Corpo do Email:", value=default_corpo_email)
-
-    if st.button('Gerar Excel'):
-        if data:
-            try:
-                data_io = StringIO(data)
-                df = pd.read_csv(data_io, sep="\s+", engine='python', skiprows=1)
-                df.to_excel(nome_arquivo, index=False, header=False)
-
-                with open(nome_arquivo, "rb") as f:
-                    st.download_button("Baixar Excel", f.read(), file_name=nome_arquivo)
-                st.success("Excel gerado com sucesso!")
-                if st.button('Enviar Email via Outlook'):
-                    try:
-                        command = f'start "" "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Outlook.lnk" /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
-                        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                    with open(nome_arquivo, "rb") as f:
+                        st.download_button("Baixar Excel", f.read(), file_name=nome_arquivo)
+                    st.success("Excel gerado com sucesso!")
+                    if st.button('Enviar Email via Outlook'):
+                        try:
+                            command = f'start "" "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Outlook.lnk" /c ipm.note /m "{destinatario}?subject={assunto}&body={corpo_email}" /a "{nome_arquivo}"'
+                            result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                            
+                            if result.returncode != 0:
+                                st.error("Falha ao abrir o Outlook")
+                                st.error(f"Erro: {result.stderr}")
+                            else:
+                                st.success("Outlook aberto para envio de email!")
                         
-                        if result.returncode != 0:
-                            st.error("Falha ao abrir o Outlook")
-                            st.error(f"Erro: {result.stderr}")
-                        else:
-                            st.success("Outlook aberto para envio de email!")
-                    
-                    except Exception as e:
-                        st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
-            except Exception as e:
-                st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
-
-elif opcao_opcoes == "XML Opção":
-    st.title("Options Data Input and XML Generator")
-
-    with st.expander("Input Options Form"):
-        with st.form("options_form"):
-            cols = st.columns(4)
-            with cols[0]:
-                action = st.selectbox("Action (Buy/Sell):", options=["Buy", "Sell"])
-            with cols[1]:
-                ticker = st.text_input("Ticker (e.g., PBR):")
-            with cols[2]:
-                date = st.date_input("Expiration Date:")
-            with cols[3]:
-                quantity = st.number_input("Quantity:", min_value=0)
-            
-            cols2 = st.columns(3)
-            with cols2[0]:
-                price = st.number_input("Option Price:", format="%.6f")
-            with cols2[1]:
-                option_type = st.selectbox("Option Type (Call/Put):", ["Call", "Put"])
-            with cols2[2]:
-                strike_price = st.number_input("Strike Price:", format="%.2f")
-            
-            submit_button = st.form_submit_button("Generate XML")
-        
-    if submit_button and all([action, ticker, date, quantity, price, option_type, strike_price]):
-        commission = quantity * 0.25
-        xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
-        new_data = {
-            "Action": action, "Ticker": ticker, "Date": date, "Quantity": quantity,
-            "Price": price, "Option Type": option_type, "Strike Price": strike_price,
-            "Commission": commission, "XML": xml_result
-        }
-        st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
-
-    with st.expander("Options Dashboard"):
-        if not st.session_state['options_df'].empty:
-            st.dataframe(st.session_state['options_df'], height=300)
-            st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
-
-    with st.expander("Consolidated Dashboard"):
-        if not st.session_state['options_df'].empty:
-            consolidated_data = calculate_weighted_average(st.session_state['options_df'])
-            formatted_data = consolidated_data.style.format({'Average_Price': '{:.6f}'})  # Formatar para 6 casas decimais
-            st.write("Consolidated Data with Average Prices:")
-            st.dataframe(formatted_data)
-
-    if st.button("Clear Data"):
-        st.session_state['options_df'] = pd.DataFrame(columns=[
-            "Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "Commission", "XML"
-        ])
-        st.rerun()
-
-elif opcao_opcoes == 'Consolidado opções':
-    st.title("Options Data Analysis")
-
-    with st.expander("Paste Data Here"):
-        raw_data = st.text_area("Paste data in the following format: \nSide\tSymbol\tQuantity\tExecution Price\tStrike\tMaturity\tCALL / PUT\tCommission", height=300)
-        process_button = st.button("Process Data")
+                        except Exception as e:
+                            st.error(f"Ocorreu um erro ao tentar abrir o Outlook: {e}")
+                except Exception as e:
+                    st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
+elif st.session_state.selected_category == "Opções":
+    elif opcao_opcoes == "XML Opção":
+        st.title("Options Data Input and XML Generator")
     
-    if process_button and raw_data:
-        df = parse_data(raw_data)
-        result_df = calculate_average_price(df)
-        st.write("Aggregated and Averaged Data:")
-        st.dataframe(result_df)
-
-elif confirmacao_opcoes == 'Comissions':
-    st.title("Comissions Off Shore")
-    start_date = st.date_input('Data de Início', datetime(2023, 7, 1))
-    end_date = st.date_input('Data de Término', datetime(2024, 1, 1))
-
-    if st.button('Processar Dados'):
-        consolidated_df = process_data(start_date, end_date)
-        if not consolidated_df.empty:
-            st.write("DataFrame consolidado criado com sucesso.")
-            st.dataframe(consolidated_df)
-            soma_produto = (consolidated_df.iloc[:, 5] * consolidated_df.iloc[:, 6]).sum()
-            soma_shares = (consolidated_df.iloc[:, 5]).sum()
-            st.write(f"A comissão consolidada para o período é de: {soma_produto:.2f} dólares")
-            st.write(f"Total de shares é de: {soma_shares:.2f}")
-
-            towrite = StringIO()
-            consolidated_df.to_excel(towrite, index=False, engine='xlsxwriter')
-            towrite.seek(0)
-            st.download_button(label="Baixar Excel", data=towrite, file_name='comissoes.xlsx', mime='application/vnd.ms-excel')
-        else:
-            st.write("Nenhum dado encontrado para o período selecionado.")
+        with st.expander("Input Options Form"):
+            with st.form("options_form"):
+                cols = st.columns(4)
+                with cols[0]:
+                    action = st.selectbox("Action (Buy/Sell):", options=["Buy", "Sell"])
+                with cols[1]:
+                    ticker = st.text_input("Ticker (e.g., PBR):")
+                with cols[2]:
+                    date = st.date_input("Expiration Date:")
+                with cols[3]:
+                    quantity = st.number_input("Quantity:", min_value=0)
+                
+                cols2 = st.columns(3)
+                with cols2[0]:
+                    price = st.number_input("Option Price:", format="%.6f")
+                with cols2[1]:
+                    option_type = st.selectbox("Option Type (Call/Put):", ["Call", "Put"])
+                with cols2[2]:
+                    strike_price = st.number_input("Strike Price:", format="%.2f")
+                
+                submit_button = st.form_submit_button("Generate XML")
+            
+        if submit_button and all([action, ticker, date, quantity, price, option_type, strike_price]):
+            commission = quantity * 0.25
+            xml_result = generate_xml(action, ticker, date, quantity, price, option_type, strike_price)
+            new_data = {
+                "Action": action, "Ticker": ticker, "Date": date, "Quantity": quantity,
+                "Price": price, "Option Type": option_type, "Strike Price": strike_price,
+                "Commission": commission, "XML": xml_result
+            }
+            st.session_state['options_df'] = st.session_state['options_df'].append(new_data, ignore_index=True)
+    
+        with st.expander("Options Dashboard"):
+            if not st.session_state['options_df'].empty:
+                st.dataframe(st.session_state['options_df'], height=300)
+                st.text_area("XML to Copy:", "\n".join(st.session_state['options_df']['XML']), height=100)
+    
+        with st.expander("Consolidated Dashboard"):
+            if not st.session_state['options_df'].empty:
+                consolidated_data = calculate_weighted_average(st.session_state['options_df'])
+                formatted_data = consolidated_data.style.format({'Average_Price': '{:.6f}'})  # Formatar para 6 casas decimais
+                st.write("Consolidated Data with Average Prices:")
+                st.dataframe(formatted_data)
+    
+        if st.button("Clear Data"):
+            st.session_state['options_df'] = pd.DataFrame(columns=[
+                "Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "Commission", "XML"
+            ])
+            st.rerun()
+    
+    elif opcao_opcoes == 'Consolidado opções':
+        st.title("Options Data Analysis")
+    
+        with st.expander("Paste Data Here"):
+            raw_data = st.text_area("Paste data in the following format: \nSide\tSymbol\tQuantity\tExecution Price\tStrike\tMaturity\tCALL / PUT\tCommission", height=300)
+            process_button = st.button("Process Data")
+        
+        if process_button and raw_data:
+            df = parse_data(raw_data)
+            result_df = calculate_average_price(df)
+            st.write("Aggregated and Averaged Data:")
+            st.dataframe(result_df)
+    
+    elif confirmacao_opcoes == 'Comissions':
+        st.title("Comissions Off Shore")
+        start_date = st.date_input('Data de Início', datetime(2023, 7, 1))
+        end_date = st.date_input('Data de Término', datetime(2024, 1, 1))
+    
+        if st.button('Processar Dados'):
+            consolidated_df = process_data(start_date, end_date)
+            if not consolidated_df.empty:
+                st.write("DataFrame consolidado criado com sucesso.")
+                st.dataframe(consolidated_df)
+                soma_produto = (consolidated_df.iloc[:, 5] * consolidated_df.iloc[:, 6]).sum()
+                soma_shares = (consolidated_df.iloc[:, 5]).sum()
+                st.write(f"A comissão consolidada para o período é de: {soma_produto:.2f} dólares")
+                st.write(f"Total de shares é de: {soma_shares:.2f}")
+    
+                towrite = StringIO()
+                consolidated_df.to_excel(towrite, index=False, engine='xlsxwriter')
+                towrite.seek(0)
+                st.download_button(label="Baixar Excel", data=towrite, file_name='comissoes.xlsx', mime='application/vnd.ms-excel')
+            else:
+                st.write("Nenhum dado encontrado para o período selecionado.")
 
 elif arb_opcoes == 'Estrutura a Termo de Vol':
     st.title('Projeção de Volatilidade com GARCH')
