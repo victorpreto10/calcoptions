@@ -354,6 +354,40 @@ def calcular_niveis_kapitalo(client_orders, prices_df):
 
     return merged_data
     
+def processar_dados_kapitalo(dados):
+    operacoes = {}
+    regex = re.compile(r'([CV])\s(\S+)\s.*?(\d+)(k|K)\s.*?@\s*(\+?-?\d+)')
+    for linha in dados.strip().split('\n'):
+        match = regex.search(linha)
+        if match:
+            operacao, ticker, quantidade_str, milhar, valor = match.groups()
+            quantidade = int(quantidade_str) * 1000
+            valor = int(valor)
+            linha_id = f"{ticker}-{quantidade}-{valor}-{operacao}"
+            if ticker not in operacoes:
+                operacoes[ticker] = {"C": [], "V": []}
+            operacoes[ticker][operacao].append((linha, quantidade, valor, linha_id))
+    return operacoes
+
+def mostrar_niveis_kapitalo(operacoes, ticker_escolhido, px_ref):
+    if ticker_escolhido in operacoes:
+        if 'selecionados_kapitalo' not in st.session_state:
+            st.session_state['selecionados_kapitalo'] = set()
+        compras = sorted(operacoes[ticker_escolhido]["C"], key=lambda x: x[2], reverse=True)
+        vendas = sorted(operacoes[ticker_escolhido]["V"], key=lambda x: x[2])
+        for lista_operacoes, tipo in [(compras, "Compras"), (vendas, "Vendas")]:
+            st.subheader(f"{tipo} para {ticker_escolhido}:")
+            for index, operacao in enumerate(lista_operacoes):
+                diferencial = ((-operacao[2] / 10000) * px_ref) if tipo == "Compras" else (operacao[2] / 10000) * px_ref
+                unique_key = f"{ticker_escolhido}-{index}-{tipo}"
+                check = st.checkbox(f"{operacao[0]} | Diferencial: {diferencial:.6f} R$", key=unique_key,
+                                    value=unique_key in st.session_state['selecionados_kapitalo'])
+                if check:
+                    st.session_state['selecionados_kapitalo'].add(unique_key)
+                else:
+                    st.session_state['selecionados_kapitalo'].discard(unique_key)
+
+    pass    
 def processar_dados_cash(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
@@ -525,16 +559,37 @@ if st.session_state.selected_category == "Arbitragem":
     elif arb_opcoes == 'Niveis Kapitalo':
         
         st.title('Níveis Kapitalo')
-    
-        dados_recap = st.text_area("Cole os dados de recap aqui:")
         
-        if st.button('Processar Recap'):
-            df_recap = processar_dados_recap(dados_recap)
-            if not df_recap.empty:
-                st.write("Dados processados:")
-                st.dataframe(df_recap)
-            else:
-                st.write("Nenhum dado processado.")
+        if 'dados_operacoes_kapitalo' not in st.session_state:
+            st.session_state['dados_operacoes_kapitalo'] = []
+        
+        with st.sidebar:
+            st.header("Inserir e Gerenciar Dados - Níveis Kapitalo")
+            dados_raw_kapitalo = st.text_area("Cole os dados das operações aqui:", height=150)
+            if st.button("Salvar Dados Iniciais - Kapitalo"):
+                if dados_raw_kapitalo:
+                    linhas = dados_raw_kapitalo.strip().split("\n")
+                    st.session_state['dados_operacoes_kapitalo'].extend(linhas)
+                    st.success("Dados adicionados com sucesso!")
+        
+            dados_adicionais_kapitalo = st.text_area("Cole operações adicionais aqui:", height=150)
+            if st.button("Adicionar Operações - Kapitalo"):
+                if dados_adicionais_kapitalo:
+                    linhas_adicionais = dados_adicionais_kapitalo.strip().split("\n")
+                    st.session_state['dados_operacoes_kapitalo'].extend(linhas_adicionais)
+                    st.success("Operações adicionais adicionadas com sucesso!")
+        
+            if st.button("Apagar Todos os Dados - Kapitalo"):
+                st.session_state['dados_operacoes_kapitalo'] = []
+                st.experimental_rerun()
+        
+        if 'dados_operacoes_kapitalo' in st.session_state and st.session_state['dados_operacoes_kapitalo']:
+            operacoes_processadas_kapitalo = processar_dados_kapitalo(st.session_state['dados_operacoes_kapitalo'])
+            tickers_kapitalo = list(operacoes_processadas_kapitalo.keys())
+            ticker_escolhido_kapitalo = st.selectbox("Escolha um ticker - Kapitalo:", [""] + tickers_kapitalo)
+            if ticker_escolhido_kapitalo:
+                px_ref_kapitalo = st.number_input("Px Ref.:", min_value=0.01, step=0.01, format="%.2f", key=f"px_ref_{ticker_escolhido_kapitalo}")
+                mostrar_niveis_kapitalo(operacoes_processadas_kapitalo, ticker_escolhido_kapitalo, px_ref_kapitalo)
                 
     elif arb_opcoes == 'Basket Fidessa':
         st.title("Basket Fidessa")
