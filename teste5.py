@@ -206,15 +206,17 @@ def processar_dados_cash(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
         try:
-            operacao, produto, qtde, preco = linha.split()
-            qtde = qtde.replace(',', '')
-            preco = preco.replace(',', '').replace('.', '')
+            operacao, produto, resto = linha.split(' ', 2)
+            qtde, preco = resto.split(' @ ')
+            qtde = qtde.replace('.', '').replace(',', '.')  # Remover pontos e ajustar vírgulas
+            preco = preco.replace('.', '').replace(',', '.')  # Ajusta o preço para o formato correto
             qtde = float(qtde) * (-1 if operacao == 'V' else 1)
             linhas.append([data_hoje, produto, qtde, float(preco), "LIQUIDEZ"])
-        except ValueError:
-            st.error(f"Erro ao processar a linha: {linha}. Verifique o formato dos dados.")
+        except ValueError as e:
+            st.error(f"Erro ao processar a linha: {linha}. Verifique o formato dos dados. Detalhes: {e}")
             continue
     return linhas
+
 
 def processar_dados_futuros(dado, data_hoje):
     linhas = []
