@@ -446,7 +446,7 @@ confirmacao_opcoes = st.sidebar.radio(
     ('Update com participação', 'Leitor Recap Kap', 'Gerar Excel', 'Comissions')
 )
 
-elif opcao == 'Pegar Volatilidade Histórica':
+elif opcao_opcoes == 'Pegar Volatilidade Histórica':
     ticker = st.text_input('Ticker do Ativo:', value='PETR4.SA')
     st.text(
         "O ticker deve seguir o mesmo padrão presente no Yahoo Finance. ")
@@ -455,7 +455,7 @@ elif opcao == 'Pegar Volatilidade Histórica':
         volatilidade = calcular_volatilidade_historica(ticker, periodo)
         st.success(f'Volatilidade Histórica para {ticker} no período de {periodo}: {volatilidade * 100:.2f}%')
 
-elif opcao == 'Calcular Preço de Opções':
+elif opcao_opcoes == 'Calcular Preço de Opções':
     # Seleção do tipo de opção
     tipo_opcao = st.selectbox('Tipo de Opção', ['Europeia', 'Americana', 'Parisian'])
     metodo_solucao = st.selectbox('Método de Solução', {
@@ -517,7 +517,7 @@ elif opcao == 'Calcular Preço de Opções':
                     st.json(gregas_venda)
 
 
-elif opcao == 'Calcular Volatilidade Implícita':
+elif opcao_opcoes == 'Calcular Volatilidade Implícita':
     Otype = st.radio("Tipo de Opção", ['Call', 'Put'])
     market_price = st.number_input('Preço de Mercado da Opção', value=5.0)
     S0 = st.number_input('Preço do Ativo Subjacente', value=100.0)
@@ -540,7 +540,7 @@ elif opcao == 'Calcular Volatilidade Implícita':
         except Exception as e:
             st.error(f"Erro ao calcular a volatilidade implícita: {e}")
 
-elif opcao == 'Pegar Open Interest':
+elif opcao_opcoes == 'Pegar Open Interest':
     ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
     if ticker_symbol:
         ticker = yf.Ticker(ticker_symbol)
@@ -617,7 +617,7 @@ elif opcao == 'Pegar Open Interest':
     
     
     
-elif opcao == 'Spreads Arb':
+elif arb_opcoes == 'Spreads Arb':
 
     # Título da página
     st.title('Dashboard de Arbitragem por Cliente')
@@ -658,7 +658,7 @@ elif opcao == 'Spreads Arb':
         st.experimental_rerun()
 
 
-elif opcao == 'Gerar Excel':
+elif confirmacao_opcoes == 'Gerar Excel':
     st.title("Gerar Excel a partir de Dados Colados")
     data = st.text_area("Cole os dados aqui, separados por espaço:", height=300)
     
@@ -701,7 +701,7 @@ elif opcao == 'Gerar Excel':
                 st.error(f"Ocorreu um erro ao gerar o Excel: {e}")
 
 
-elif opcao == 'Leitor Recap Kap':
+elif confirmacao_opcoes == 'Leitor Recap Kap':
     st.title('Leitor ADRxORD Kapitalo')
     uploaded_file = st.file_uploader("Choose a file")
     if uploaded_file is not None:
@@ -797,7 +797,7 @@ if "abas_futuros" not in st.session_state:
 if "dados_futuros" not in st.session_state:
     st.session_state.dados_futuros = {}
 
-elif opcao == 'Planilha SPX':
+elif opcao_opcoes == 'Planilha SPX':
     st.title("Gerador de Planilha SPX")
     
     if st.button("Adicionar uma nova aba para Futuros"):
@@ -863,7 +863,7 @@ elif opcao == 'Planilha SPX':
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
-elif opcao == 'Basket Fidessa':
+elif arb_opcoes == 'Basket Fidessa':
     st.title("Basket Fidessa")
     
     cliente = st.text_input("Nome do Cliente",)
@@ -902,7 +902,7 @@ elif opcao == 'Basket Fidessa':
         st.write("Quantities Sum by side: ")
         st.write(quantities_sum_table1)
 
-elif opcao == 'Notional to shares':
+elif opcao_opcoes == 'Notional to shares':
     st.title("Notional to Shares Calculator")
 
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
@@ -922,7 +922,7 @@ elif opcao == 'Notional to shares':
         except ValueError as e:
             st.error(str(e))
 
-elif opcao == "Update com participação":
+elif confirmacao_opcoes == "Update com participação":
     st.title("Market Participation Tracker")
     api_key = "cnj4ughr01qkq94g9magcnj4ughr01qkq94g9mb0"
     base_url = "https://finnhub.io/api/v1/quote"
@@ -975,7 +975,7 @@ elif opcao == "Update com participação":
 if 'options_df' not in st.session_state:
     st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
 
-elif opcao == "XML Opção":
+elif opcao_opcoes == "XML Opção":
     st.title("Options Data Input and XML Generator")
 
     with st.expander("Input Options Form"):
@@ -1029,7 +1029,7 @@ elif opcao == "XML Opção":
         st.rerun()
 
 
-elif opcao == 'Consolidado opções':
+elif opcao_opcoes == 'Consolidado opções':
     st.title("Options Data Analysis")
 
 # Aba para entrada de dados
@@ -1045,7 +1045,7 @@ elif opcao == 'Consolidado opções':
 
 
 
-elif opcao == 'Comissions':
+elif confirmacao_opcoes == 'Comissions':
     st.title("Comissions Off Shore")
     start_date = st.date_input('Data de Início', datetime(2023, 7, 1))
     end_date = st.date_input('Data de Término', datetime(2024, 1, 1))
@@ -1069,7 +1069,7 @@ elif opcao == 'Comissions':
         else:
             st.write("Nenhum dado encontrado para o período selecionado.")
             
-elif opcao == 'Estrutura a Termo de Vol':
+elif arb_opcoes == 'Estrutura a Termo de Vol':
     st.title('Projeção de Volatilidade com GARCH')
 
     # Inputs do usuário
