@@ -30,6 +30,24 @@ getcontext().prec = 28  # Definir precisão para operações Decimal
 
 # Funções Gerais
 
+
+def process_file(uploaded_file):
+    df = pd.read_excel(uploaded_file, header=1)
+    if 'Price' in df.columns and df['Price'].dtype == 'object':
+        df['Price'] = df['Price'].str.replace(',', '').astype(float)
+    df['Operation'] = df['Qtde'].apply(lambda x: 'Buy' if x > 0 else 'Sell')
+    if 'Price' in df.columns:
+        df['Total Value'] = df['Price'] * df['Qtde']
+        grouped_df = df.groupby(['Operation', 'Ticker Bloomberg']).apply(
+            lambda x: pd.Series({
+                'Qtde': x['Qtde'].sum(),
+                'Weighted Price': (x['Total Value']).sum() / x['Qtde'].sum()
+            })).reset_index()
+    else:
+        grouped_df = df.groupby(['Operation', 'Ticker Bloomberg']).agg({'Qtde': 'sum'}).reset_index()
+    return grouped_df
+
+
 def download_data(asset, start, end, max_retries=5):
     for i in range(max_retries):
         try:
