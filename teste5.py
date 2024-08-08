@@ -763,7 +763,7 @@ if 'px_ref_por_ativo' not in st.session_state:
 if 'limpar_adicionais' not in st.session_state:
     st.session_state['limpar_adicionais'] = False
 
-elif opcao == 'Niveis Kapitalo':
+elif arb_opcoes == 'Niveis Kapitalo':
     if 'dados_operacoes' not in st.session_state:
         st.session_state['dados_operacoes'] = []
     
