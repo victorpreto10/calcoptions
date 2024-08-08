@@ -294,6 +294,66 @@ def imp_vol(S0, K, T, r, market, Otype):
 
 # Funções de Processamento de Dados para Planilhas
 
+def processar_dados_recap(dados_recap):
+    linhas_recap = []
+    for linha in dados_recap.strip().split("\n"):
+        try:
+            operacao, ticker, quantidade_str, valor = linha.split()
+            quantidade = int(quantidade_str.replace(',', ''))
+            valor = float(valor.replace(',', '.'))
+            linhas_recap.append([operacao, ticker, quantidade, valor])
+        except ValueError as e:
+            st.error(f"Erro ao processar a linha: {linha}. Verifique o formato dos dados. Detalhes: {e}")
+            continue
+    return pd.DataFrame(linhas_recap, columns=["Operacao", "Ticker", "Quantidade", "Valor"])
+
+def processar_dados_spread(dados):
+    operacoes = {}
+    regex = re.compile(r'([CV])\s(\S+)\s.*?(\d+)(k|K)\s.*?@\s*(\+?-?\d+)')
+    for linha in dados:
+        match = regex.search(linha)
+        if match:
+            operacao, ticker, quantidade_str, milhar, valor = match.groups()
+            quantidade = int(quantidade_str) * 1000
+            valor = int(valor)
+            linha_id = f"{ticker}-{quantidade}-{valor}-{operacao}"
+            if ticker not in operacoes:
+                operacoes[ticker] = {"C": [], "V": []}
+            operacoes[ticker][operacao].append((linha, quantidade, valor, linha_id))
+    return operacoes
+
+def mostrar_operacoes_spread(operacoes, ticker_escolhido, px_ref):
+    if ticker_escolhido in operacoes:
+        if 'selecionados' not in st.session_state:
+            st.session_state['selecionados'] = set()
+        compras = sorted(operacoes[ticker_escolhido]["C"], key=lambda x: x[2], reverse=True)
+        vendas = sorted(operacoes[ticker_escolhido]["V"], key=lambda x: x[2])
+        for lista_operacoes, tipo in [(compras, "Compras"), (vendas, "Vendas")]:
+            st.subheader(f"{tipo} para {ticker_escolhido}:")
+            for index, operacao in enumerate(lista_operacoes):
+                diferencial = ((-operacao[2] / 10000) * px_ref) if tipo == "Compras" else (operacao[2] / 10000) * px_ref
+                unique_key = f"{ticker_escolhido}-{index}-{tipo}"
+                check = st.checkbox(f"{operacao[0]} | Diferencial: {diferencial:.6f} R$", key=unique_key,
+                                    value=unique_key in st.session_state['selecionados'])
+                if check:
+                    st.session_state['selecionados'].add(unique_key)
+                else:
+                    st.session_state['selecionados'].discard(unique_key)
+
+    pass
+    
+def calcular_niveis_kapitalo(client_orders, prices_df):
+    # Supondo que 'client_orders' é um DataFrame com as colunas ['Cliente', 'Ativo', 'Quantidade', 'Preco_Referencia']
+    # e 'prices_df' é um DataFrame com os preços atuais dos ativos
+
+    # Unir os dados do cliente com os preços atuais
+    merged_data = pd.merge(client_orders, prices_df, on='Ativo')
+
+    # Calcular o nível (preço atual dividido pelo preço de referência)
+    merged_data['Nivel'] = merged_data['Preco_Atual'] / merged_data['Preco_Referencia']
+
+    return merged_data
+    
 def processar_dados_cash(dado, data_hoje):
     linhas = []
     for linha in dado.strip().split('\n'):
@@ -463,10 +523,19 @@ if st.session_state.selected_category == "Arbitragem":
             )
 
     elif arb_opcoes == 'Niveis Kapitalo':
-        st.title("Niveis Kapitalo")
-        st.markdown("Conteúdo relacionado a Niveis Kapitalo...")
-        # Coloque aqui o código relacionado a Niveis Kapitalo...
-
+        
+        st.title('Níveis Kapitalo')
+    
+        dados_recap = st.text_area("Cole os dados de recap aqui:")
+        
+        if st.button('Processar Recap'):
+            df_recap = processar_dados_recap(dados_recap)
+            if not df_recap.empty:
+                st.write("Dados processados:")
+                st.dataframe(df_recap)
+            else:
+                st.write("Nenhum dado processado.")
+                
     elif arb_opcoes == 'Basket Fidessa':
         st.title("Basket Fidessa")
         cliente = st.text_input("Nome do Cliente",)
