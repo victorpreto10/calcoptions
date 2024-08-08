@@ -446,6 +446,10 @@ confirmacao_opcoes = st.sidebar.radio(
     ('Update com participação', 'Leitor Recap Kap', 'Gerar Excel', 'Comissions')
 )
 
+if arb_opcoes == 'Spreads Arb':
+    st.title("Spreads Arb")
+    st.markdown("Conteúdo relacionado a Spreads Arb...")
+    
 elif opcao_opcoes == 'Pegar Volatilidade Histórica':
     ticker = st.text_input('Ticker do Ativo:', value='PETR4.SA')
     st.text(
