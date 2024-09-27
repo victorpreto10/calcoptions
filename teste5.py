@@ -903,10 +903,11 @@ elif st.session_state.selected_category == "Opções":
         else:
             st.warning("Por favor, insira um ticker válido.")
 
-      elif opcao_opcoes == 'Pegar Open Interest2':  
-            ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
-    
-            if ticker_symbol:
+      elif opcao_opcoes == 'Pegar Open Interest2':
+          
+          ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
+            
+          if ticker_symbol:
                 ticker = yf.Ticker(ticker_symbol)
                 expiries = ticker.options  # Pegar datas de vencimento disponíveis
         
@@ -954,7 +955,10 @@ elif st.session_state.selected_category == "Opções":
                     st.error("Não há datas de vencimento disponíveis para este ticker.")
             else:
                 st.warning("Por favor, insira um ticker válido.")
-        
+
+
+
+            
 
 
 elif st.session_state.selected_category == "Confirmações":
