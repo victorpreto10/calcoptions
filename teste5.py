@@ -956,6 +956,8 @@ elif st.session_state.selected_category == "Opções":
         else:
             st.warning("Por favor, insira um ticker válido.")        
 
+
+
     elif opcao_opcoes == 'Pegar Open Interest3':
         # Input do Ticker
         ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
@@ -965,16 +967,28 @@ elif st.session_state.selected_category == "Opções":
             expiries = ticker.options  # Pegar datas de vencimento disponíveis
     
             if expiries:
-                if st.button('Gerar Gráfico Consolidado de Open Interest'):
+                if st.button('Gerar Gráfico Consolidado de Open Interest e Baixar Excel'):
                     # DataFrames vazios para armazenar os valores agregados
                     all_calls = pd.DataFrame(columns=['strike', 'openInterest'])
                     all_puts = pd.DataFrame(columns=['strike', 'openInterest'])
+    
+                    # Criar lista para armazenar as options chains para salvar no Excel
+                    calls_list = []
+                    puts_list = []
     
                     # Iterar sobre todos os vencimentos e somar os valores de open interest por strike
                     for expiry in expiries:
                         opts = ticker.option_chain(expiry)
                         calls = opts.calls[['strike', 'openInterest']]
                         puts = opts.puts[['strike', 'openInterest']]
+    
+                        # Adicionar vencimento aos DataFrames
+                        calls['expiry'] = expiry
+                        puts['expiry'] = expiry
+
+                        # Armazenar para salvar no Excel
+                        calls_list.append(calls)
+                        puts_list.append(puts)
     
                         # Somar o openInterest para cada strike nos calls e puts
                         all_calls = pd.concat([all_calls, calls]).groupby('strike', as_index=False).sum()
@@ -1023,10 +1037,32 @@ elif st.session_state.selected_category == "Opções":
     
                     # Exibir os gráficos no Streamlit
                     st.pyplot(fig)
+
+                    # Criar arquivo Excel em memória
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        # Concatenar todas as calls e puts
+                        full_calls = pd.concat(calls_list)
+                        full_puts = pd.concat(puts_list)
+    
+                        # Escrever os dados no Excel em abas separadas
+                        full_calls.to_excel(writer, sheet_name='Calls', index=False)
+                        full_puts.to_excel(writer, sheet_name='Puts', index=False)
+
+                        writer.save()
+
+                    # Oferecer o arquivo para download
+                    st.download_button(
+                        label="Baixar Excel das Options Chains",
+                        data=output.getvalue(),
+                        file_name=f'{ticker_symbol}_options_chain.xlsx',
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
             else:
                 st.error("Não há datas de vencimento disponíveis para este ticker.")
         else:
             st.warning("Por favor, insira um ticker válido.")
+
 
 
        
