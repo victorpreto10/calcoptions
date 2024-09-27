@@ -903,58 +903,58 @@ elif st.session_state.selected_category == "Opções":
         else:
             st.warning("Por favor, insira um ticker válido.")
 
-      elif opcao_opcoes == 'Pegar Open Interest2':
-          
-          ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
-            
-          if ticker_symbol:
-                ticker = yf.Ticker(ticker_symbol)
-                expiries = ticker.options  # Pegar datas de vencimento disponíveis
+    elif opcao_opcoes == 'Pegar Open Interest2':
         
-                if expiries:
-                    if st.button('Gerar PDFs de Open Interest para Todos os Vencimentos'):
-                        with tempfile.TemporaryDirectory() as temp_dir:
-                            for expiry in expiries:
-                                opts = ticker.option_chain(expiry)
-                                calls = opts.calls[['strike', 'openInterest']]
-                                puts = opts.puts[['strike', 'openInterest']]
+        ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
         
-                                pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
-                                with PdfPages(pdf_path) as pdf:
-                                    fig, axes = plt.subplots(1, 3, figsize=(30, 8))
-        
-                                    calls_oi_grouped = calls.groupby('strike')['openInterest'].sum().reset_index()
-                                    axes[0].barh(calls_oi_grouped['strike'], calls_oi_grouped['openInterest'], color='skyblue')
-                                    axes[0].set_title(f'Calls Open Interest for {expiry}')
-                                    axes[0].set_ylabel('Strike Price')
-                                    axes[0].set_xlabel('Open Interest')
-        
-                                    puts_oi_grouped = puts.groupby('strike')['openInterest'].sum().reset_index()
-                                    axes[1].barh(puts_oi_grouped['strike'], puts_oi_grouped['openInterest'], color='salmon')
-                                    axes[1].set_title(f'Puts Open Interest for {expiry}')
-                                    axes[1].set_ylabel('Strike Price')
-                                    axes[1].set_xlabel('Open Interest')
-        
-                                    combined = pd.merge(calls_oi_grouped, puts_oi_grouped, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
-                                    combined['difference'] = combined['openInterest_call'] - combined['openInterest_put']
-                                    axes[2].barh(combined['strike'], combined['difference'], color='purple')
-                                    axes[2].set_title(f'Difference (Calls - Puts) for {expiry}')
-                                    axes[2].set_ylabel('Strike Price')
-                                    axes[2].set_xlabel('Difference in Open Interest')
-        
-                                    pdf.savefig(fig)
-                                    plt.close(fig)
-        
-                                # Adiciona botão de download para cada vencimento
-                                with open(pdf_path, "rb") as f:
-                                    st.download_button(label=f"Download PDF for {expiry}",
-                                                       data=f.read(),
-                                                       file_name=os.path.basename(pdf_path),
-                                                       mime='application/octet-stream')
-                else:
-                    st.error("Não há datas de vencimento disponíveis para este ticker.")
+        if ticker_symbol:
+            ticker = yf.Ticker(ticker_symbol)
+            expiries = ticker.options  # Pegar datas de vencimento disponíveis
+    
+            if expiries:
+                if st.button('Gerar PDFs de Open Interest para Todos os Vencimentos'):
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        for expiry in expiries:
+                            opts = ticker.option_chain(expiry)
+                            calls = opts.calls[['strike', 'openInterest']]
+                            puts = opts.puts[['strike', 'openInterest']]
+    
+                            pdf_path = os.path.join(temp_dir, f'{ticker_symbol}_{expiry}.pdf')
+                            with PdfPages(pdf_path) as pdf:
+                                fig, axes = plt.subplots(1, 3, figsize=(30, 8))
+    
+                                calls_oi_grouped = calls.groupby('strike')['openInterest'].sum().reset_index()
+                                axes[0].barh(calls_oi_grouped['strike'], calls_oi_grouped['openInterest'], color='skyblue')
+                                axes[0].set_title(f'Calls Open Interest for {expiry}')
+                                axes[0].set_ylabel('Strike Price')
+                                axes[0].set_xlabel('Open Interest')
+    
+                                puts_oi_grouped = puts.groupby('strike')['openInterest'].sum().reset_index()
+                                axes[1].barh(puts_oi_grouped['strike'], puts_oi_grouped['openInterest'], color='salmon')
+                                axes[1].set_title(f'Puts Open Interest for {expiry}')
+                                axes[1].set_ylabel('Strike Price')
+                                axes[1].set_xlabel('Open Interest')
+    
+                                combined = pd.merge(calls_oi_grouped, puts_oi_grouped, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
+                                combined['difference'] = combined['openInterest_call'] - combined['openInterest_put']
+                                axes[2].barh(combined['strike'], combined['difference'], color='purple')
+                                axes[2].set_title(f'Difference (Calls - Puts) for {expiry}')
+                                axes[2].set_ylabel('Strike Price')
+                                axes[2].set_xlabel('Difference in Open Interest')
+    
+                                pdf.savefig(fig)
+                                plt.close(fig)
+    
+                            # Adiciona botão de download para cada vencimento
+                            with open(pdf_path, "rb") as f:
+                                st.download_button(label=f"Download PDF for {expiry}",
+                                                   data=f.read(),
+                                                   file_name=os.path.basename(pdf_path),
+                                                   mime='application/octet-stream')
             else:
-                st.warning("Por favor, insira um ticker válido.")
+                st.error("Não há datas de vencimento disponíveis para este ticker.")
+        else:
+            st.warning("Por favor, insira um ticker válido.")        
 
 
 
