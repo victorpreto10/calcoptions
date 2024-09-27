@@ -499,7 +499,7 @@ elif st.session_state.selected_category == "Opções":
     st.sidebar.subheader("Escolha uma opção de Opções")
     opcao_opcoes = st.sidebar.radio(
         "Opções:",
-        ('XML Opção', 'Consolidado opções', 'Notional to shares', 'Planilha SPX', 'Pegar Volatilidade Histórica', 'Pegar Open Interest','Pegar Open Interest2', Pegar Open Interest3','Calcular Preço de Opções', 'Calcular Volatilidade Implícita')
+        ('XML Opção', 'Consolidado opções', 'Notional to shares', 'Planilha SPX', 'Pegar Volatilidade Histórica', 'Pegar Open Interest','Pegar Open Interest2', 'Pegar Open Interest3','Calcular Preço de Opções', 'Calcular Volatilidade Implícita')
     )
 
 elif st.session_state.selected_category == "Confirmações":
