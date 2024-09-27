@@ -956,7 +956,60 @@ elif st.session_state.selected_category == "Opções":
         else:
             st.warning("Por favor, insira um ticker válido.")        
 
-
+    elif opcao_opcoes == 'Pegar Open Interest3':
+        # Input do Ticker
+        ticker_symbol = st.text_input('Insira o Ticker do Ativo (ex.: AAPL)')
+        
+        if ticker_symbol:
+            ticker = yf.Ticker(ticker_symbol)
+            expiries = ticker.options  # Pegar datas de vencimento disponíveis
+    
+            if expiries:
+                if st.button('Gerar Gráfico Consolidado de Open Interest'):
+                    # DataFrames vazios para armazenar os valores agregados
+                    all_calls = pd.DataFrame(columns=['strike', 'openInterest'])
+                    all_puts = pd.DataFrame(columns=['strike', 'openInterest'])
+    
+                    # Iterar sobre todos os vencimentos e somar os valores de open interest por strike
+                    for expiry in expiries:
+                        opts = ticker.option_chain(expiry)
+                        calls = opts.calls[['strike', 'openInterest']]
+                        puts = opts.puts[['strike', 'openInterest']]
+    
+                        # Somar o openInterest para cada strike nos calls e puts
+                        all_calls = pd.concat([all_calls, calls]).groupby('strike', as_index=False).sum()
+                        all_puts = pd.concat([all_puts, puts]).groupby('strike', as_index=False).sum()
+    
+                    # Plotar os gráficos consolidados
+                    fig, ax = plt.subplots(1, 3, figsize=(30, 8))
+    
+                    # Gráfico de Calls Open Interest
+                    ax[0].barh(all_calls['strike'], all_calls['openInterest'], color='skyblue')
+                    ax[0].set_title(f'Calls Open Interest Consolidado')
+                    ax[0].set_ylabel('Strike Price')
+                    ax[0].set_xlabel('Open Interest')
+    
+                    # Gráfico de Puts Open Interest
+                    ax[1].barh(all_puts['strike'], all_puts['openInterest'], color='salmon')
+                    ax[1].set_title(f'Puts Open Interest Consolidado')
+                    ax[1].set_ylabel('Strike Price')
+                    ax[1].set_xlabel('Open Interest')
+    
+                    # Gráfico de Diferença entre Calls e Puts
+                    combined = pd.merge(all_calls, all_puts, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
+                    combined['difference'] = combined['openInterest_call'] - combined['openInterest_put']
+                    ax[2].barh(combined['strike'], combined['difference'], color='purple')
+                    ax[2].set_title(f'Diferença (Calls - Puts) Consolidada')
+                    ax[2].set_ylabel('Strike Price')
+                    ax[2].set_xlabel('Diferença em Open Interest')
+    
+                    # Exibir os gráficos no Streamlit
+                    st.pyplot(fig)
+            else:
+                st.error("Não há datas de vencimento disponíveis para este ticker.")
+        else:
+            st.warning("Por favor, insira um ticker válido.")        
+       
 
             
 
