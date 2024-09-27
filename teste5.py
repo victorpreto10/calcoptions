@@ -1007,10 +1007,11 @@ elif st.session_state.selected_category == "Opções":
                     ax[0].set_ylabel('Strike Price')
                     ax[0].set_xlabel('Open Interest')
 
-                    # Adicionar rótulos com o valor do strike nas barras de Calls
-                    for i in ax[0].patches:
-                        ax[0].annotate(f"{i.get_y():.2f}",
-                                       (i.get_width() + 50, i.get_y() + i.get_height() / 2),
+                    # Adicionar rótulos com o valor correto do strike nas barras de Calls
+                    for i, rect in enumerate(ax[0].patches):
+                        strike = all_calls.iloc[i]['strike']
+                        ax[0].annotate(f"{strike:.2f}",
+                                       (rect.get_width() + 50, rect.get_y() + rect.get_height() / 2),
                                        va='center')
     
                     # Gráfico de Puts Open Interest
@@ -1019,10 +1020,11 @@ elif st.session_state.selected_category == "Opções":
                     ax[1].set_ylabel('Strike Price')
                     ax[1].set_xlabel('Open Interest')
 
-                    # Adicionar rótulos com o valor do strike nas barras de Puts
-                    for i in ax[1].patches:
-                        ax[1].annotate(f"{i.get_y():.2f}",
-                                       (i.get_width() + 50, i.get_y() + i.get_height() / 2),
+                    # Adicionar rótulos com o valor correto do strike nas barras de Puts
+                    for i, rect in enumerate(ax[1].patches):
+                        strike = all_puts.iloc[i]['strike']
+                        ax[1].annotate(f"{strike:.2f}",
+                                       (rect.get_width() + 50, rect.get_y() + rect.get_height() / 2),
                                        va='center')
     
                     # Gráfico de Diferença entre Calls e Puts
@@ -1033,10 +1035,11 @@ elif st.session_state.selected_category == "Opções":
                     ax[2].set_ylabel('Strike Price')
                     ax[2].set_xlabel('Diferença em Open Interest')
 
-                    # Adicionar rótulos com o valor do strike nas barras de Diferença
-                    for i in ax[2].patches:
-                        ax[2].annotate(f"{i.get_y():.2f}",
-                                       (i.get_width() + 50, i.get_y() + i.get_height() / 2),
+                    # Adicionar rótulos com o valor correto do strike nas barras de Diferença
+                    for i, rect in enumerate(ax[2].patches):
+                        strike = combined.iloc[i]['strike']
+                        ax[2].annotate(f"{strike:.2f}",
+                                       (rect.get_width() + 50, rect.get_y() + rect.get_height() / 2),
                                        va='center')
     
                     # Exibir os gráficos no Streamlit
