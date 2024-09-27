@@ -25,6 +25,10 @@ import re
 import time
 import scipy.stats as ss
 from arch import arch_model
+import streamlit as st
+import matplotlib.pyplot as plt
+import io
+
 
 getcontext().prec = 28  # Definir precisão para operações Decimal
 
