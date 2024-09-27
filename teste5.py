@@ -988,12 +988,24 @@ elif st.session_state.selected_category == "Opções":
                     ax[0].set_title(f'Calls Open Interest Consolidado')
                     ax[0].set_ylabel('Strike Price')
                     ax[0].set_xlabel('Open Interest')
+
+                    # Adicionar rótulos nas barras de Calls
+                    for i in ax[0].patches:
+                        ax[0].annotate(f"{i.get_width():.0f}",
+                                       (i.get_width() + 50, i.get_y() + i.get_height() / 2),
+                                       va='center')
     
                     # Gráfico de Puts Open Interest
                     ax[1].barh(all_puts['strike'], all_puts['openInterest'], color='salmon')
                     ax[1].set_title(f'Puts Open Interest Consolidado')
                     ax[1].set_ylabel('Strike Price')
                     ax[1].set_xlabel('Open Interest')
+
+                    # Adicionar rótulos nas barras de Puts
+                    for i in ax[1].patches:
+                        ax[1].annotate(f"{i.get_width():.0f}",
+                                       (i.get_width() + 50, i.get_y() + i.get_height() / 2),
+                                       va='center')
     
                     # Gráfico de Diferença entre Calls e Puts
                     combined = pd.merge(all_calls, all_puts, on='strike', how='outer', suffixes=('_call', '_put')).fillna(0)
@@ -1002,13 +1014,20 @@ elif st.session_state.selected_category == "Opções":
                     ax[2].set_title(f'Diferença (Calls - Puts) Consolidada')
                     ax[2].set_ylabel('Strike Price')
                     ax[2].set_xlabel('Diferença em Open Interest')
+
+                    # Adicionar rótulos nas barras de Diferença
+                    for i in ax[2].patches:
+                        ax[2].annotate(f"{i.get_width():.0f}",
+                                       (i.get_width() + 50, i.get_y() + i.get_height() / 2),
+                                       va='center')
     
                     # Exibir os gráficos no Streamlit
                     st.pyplot(fig)
             else:
                 st.error("Não há datas de vencimento disponíveis para este ticker.")
         else:
-            st.warning("Por favor, insira um ticker válido.")        
+            st.warning("Por favor, insira um ticker válido.")
+
        
 
             
