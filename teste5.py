@@ -989,9 +989,9 @@ elif st.session_state.selected_category == "Opções":
                     ax[0].set_ylabel('Strike Price')
                     ax[0].set_xlabel('Open Interest')
 
-                    # Adicionar rótulos nas barras de Calls
+                    # Adicionar rótulos com o valor do strike nas barras de Calls
                     for i in ax[0].patches:
-                        ax[0].annotate(f"{i.get_width():.0f}",
+                        ax[0].annotate(f"{i.get_y():.2f}",
                                        (i.get_width() + 50, i.get_y() + i.get_height() / 2),
                                        va='center')
     
@@ -1001,9 +1001,9 @@ elif st.session_state.selected_category == "Opções":
                     ax[1].set_ylabel('Strike Price')
                     ax[1].set_xlabel('Open Interest')
 
-                    # Adicionar rótulos nas barras de Puts
+                    # Adicionar rótulos com o valor do strike nas barras de Puts
                     for i in ax[1].patches:
-                        ax[1].annotate(f"{i.get_width():.0f}",
+                        ax[1].annotate(f"{i.get_y():.2f}",
                                        (i.get_width() + 50, i.get_y() + i.get_height() / 2),
                                        va='center')
     
@@ -1015,9 +1015,9 @@ elif st.session_state.selected_category == "Opções":
                     ax[2].set_ylabel('Strike Price')
                     ax[2].set_xlabel('Diferença em Open Interest')
 
-                    # Adicionar rótulos nas barras de Diferença
+                    # Adicionar rótulos com o valor do strike nas barras de Diferença
                     for i in ax[2].patches:
-                        ax[2].annotate(f"{i.get_width():.0f}",
+                        ax[2].annotate(f"{i.get_y():.2f}",
                                        (i.get_width() + 50, i.get_y() + i.get_height() / 2),
                                        va='center')
     
@@ -1027,6 +1027,7 @@ elif st.session_state.selected_category == "Opções":
                 st.error("Não há datas de vencimento disponíveis para este ticker.")
         else:
             st.warning("Por favor, insira um ticker válido.")
+
 
        
 
