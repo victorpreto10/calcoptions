@@ -720,8 +720,8 @@ elif st.session_state.selected_category == "Opções":
             st.session_state.dados_futuros[nova_aba] = ""
 
         with st.form("input_form"):
-            trader = st.text_input("Nome do Trader", value="LUCAS ROSSI")
-            nome_arquivo = st.text_input("Nome do Excel", value="SPX_LUCAS_PRIMEIRA_TRANCHE")
+            trader = st.text_input("Nome do Trader", value="VINICIUS RIBEIRO")
+            nome_arquivo = st.text_input("Nome do Excel", value="SPX_VINICIUS_PRIMEIRA_TRANCHE")
             dados_cash = st.text_area("Cole os dados de CASH aqui: ex: V PETR4 159.362 @ 40,382615", height=150)
             dados_cash_inoa = st.text_area("Cole os dados de CASH INOA aqui: ex: S PETR3 639,342 41.779994", height=150)
 
@@ -1200,4 +1200,5 @@ elif st.session_state.selected_category == "Confirmações":
 # Inicializando o DataFrame de opções se não estiver presente
 if 'options_df' not in st.session_state:
     st.session_state['options_df'] = pd.DataFrame(columns=["Action", "Ticker", "Date", "Quantity", "Price", "Option Type", "Strike Price", "XML"])
+
 
